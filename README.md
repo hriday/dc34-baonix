@@ -5,14 +5,19 @@ application on the DEF CON 34 badge — a Baochip-1x, which is a **32-bit** RISC
 microcontroller with 2 MiB of SRAM. It boots a nixpkgs-built riscv64 Linux to an
 interactive shell.
 
+TL;DR: Take the 3 files from the prebuilt section, and flash your badge. When 
+you restart the badge, run the serve-wait.sh so you can see on your screen 
+what's going on on the badge, and once you get a shell, you can interact with it.
+
 This is a bragging-rights project. It is slow, it is useless, and the rest of
 this document tries to be precise about exactly how slow and exactly how useless.
 
+Shoutouts to 'Bunny' Huang and his team for such a great badge, DT for a cool 
+conference and to Rob, Dan and the rest of the NixOS village at Defcon.
+
 ---
 
-## The setup, stated plainly
-
-Five facts. None is an exaggeration, and each has a number attached.
+## The setup
 
 **1. It is a 32-bit machine running a 64-bit operating system.** There is no
 virtualisation and no hardware acceleration; there cannot be. Every single RV64
