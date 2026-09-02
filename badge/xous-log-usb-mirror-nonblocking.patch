@@ -1,0 +1,52 @@
+--- a/services/xous-log/src/main.rs
++++ b/services/xous-log/src/main.rs
+@@ -37,7 +37,48 @@
+     match xous_ipc::Buffer::into_buf(serializer) {
+         Ok(buf) => {
+             // failures to send are silent & ignored; also, this API doesn't block.
+-            buf.send(conn, 8192 /* LogString */).ok();
++            // --- local repair (not upstream) ---
++            // **`try_send`, not `send`.** The line above is the intent; it was
++            // not what the code did, and the difference is a deadlock that
++            // wedges the whole device with no output of any kind.
++            //
++            // `Buffer::send` is `xous::send_message(.., Message::Move(..))`,
++            // i.e. `SysCall::SendMessage`, and the kernel does *not* hand
++            // `ServerQueueFull` back to the sender: `kernel/src/syscall.rs`
++            // maps that error to `retry_syscall(pid, tid)`, which parks the
++            // calling thread and retries until the server drains. So this call
++            // blocks the log server whenever the USB server's 128-slot message
++            // queue is full.
++            //
++            // That closes a cycle, because the USB server logs:
++            //
++            //   1. `usb-bao1x`'s main loop calls `log::error!`, which is
++            //      `xous::send_message(.., Message::new_lend(..))` -- a
++            //      *blocking* borrow (`api/xous-api-log/src/lib.rs:55`). The
++            //      USB server is now waiting on the log server.
++            //   2. The log server handles the record and mirrors it here.
++            //   3. The USB server's queue is full -- which is exactly the
++            //      condition such a log line usually reports, since the queue
++            //      fills when the USB main loop falls behind its own receive
++            //      interrupt. `retry_syscall` parks the log server.
++            //   4. Neither ever runs again. Every process that logs blocks
++            //      behind the log server, and any client blocked in a
++            //      `usb-bao1x` call -- `SerialSendDataBlocking`,
++            //      `SerialHookBinary` -- blocks forever in the kernel, below
++            //      every deadline it has.
++            //
++            // Observed on the DEF CON 34 badge, 2026-09-01: two
++            // `serial rx ring overflowed` lines and then total silence -- no
++            // fault, no further frames, the emulator's heartbeat stopped.
++            //
++            // `try_send` is `SysCall::TrySendMessage`, which the kernel answers
++            // with `ServerQueueFull` rather than retrying. Dropping a line of
++            // mirrored console text when the USB server is saturated is
++            // exactly the trade this function already says it is making, and
++            // the `Buffer` unmaps itself on the error path (`should_drop`
++            // stays true), so nothing leaks.
++            // --- end local repair ---
++            buf.try_send(conn, 8192 /* LogString */).ok();
+         }
+         _ => {} // dont block on errors
+     }

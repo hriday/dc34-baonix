@@ -1,0 +1,92 @@
+diff --git a/tools/src/bin/xous-app-uf2.rs b/tools/src/bin/xous-app-uf2.rs
+index b53554e0c..383fe4810 100644
+--- a/tools/src/bin/xous-app-uf2.rs
++++ b/tools/src/bin/xous-app-uf2.rs
+@@ -158,9 +158,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
+     println!("Programs: {}", args);
+ 
+     let private_key = pem::parse(DEV_KEY_PEM)?;
+-    let pq_sq = SigningKey::<Params>::try_from(DEV_KEY_PQ.as_slice()).unwrap_or_else(|_| {
+-        die(&format!("invalid Test key: expected 64 bytes (4*n for SHA2-128-24), got {}", DEV_KEY_PQ.len()))
+-    });
++    // --- local repair (not upstream) ---
++    // A `let pq_sq = SigningKey::<Params>::try_from(DEV_KEY_PQ.as_slice())...` binding
++    // stood here. It was dead -- nothing downstream reads it, both branches pass
++    // DEV_KEY_PQ's bytes or path along themselves -- and it no longer compiles,
++    // because neither `Params` nor `die` is defined anywhere in this file. (The
++    // trait it names does exist: slh-dsa-bao1x's SigningKey does implement
++    // TryFrom<&[u8]>, and tools/src/sign_image.rs uses it. The undefined
++    // identifiers are the actual errors.) Dropped, which leaves the slh_dsa imports
++    // above unused -- a warning, not an error; they are upstream's lines, so this
++    // patch leaves them alone.
++    // --- end local repair ---
+ 
+     let git_rev = matches.value_of("git-rev");
+     let semver: Option<[u8; 16]> = if let Some(git_describe_str) = matches.value_of("git-describe") {
+@@ -175,7 +183,41 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
+ 
+         // Create the swap target image and encrypt swap_buffer to it
+         let mut swap = Cursor::new(Vec::new());
+-        swap_buffer.encrypt_to(&mut swap, &private_key, Some(anti_rollback as usize), git_rev, semver)?;
++        // --- local repair (not upstream) ---
++        // encrypt_to takes a *path* to the PQ signing key, while this file carries
++        // the same key inline as DEV_KEY_PQ. Spill it to a temp file so the swap
++        // image is PQ-signed with the dev key, exactly as the non-swap branch is.
++        //
++        // `create_new` and the unique name are load-bearing, not tidiness. A fixed
++        // name plus `fs::write` follows symlinks and creates 0644, so under a
++        // world-writable /tmp any local user could point it at a file of their
++        // choosing and turn this build step into an arbitrary-file overwrite. O_EXCL
++        // fails on an existing path (symlink included) instead. The removal is also
++        // run on the error path; the earlier `?` leaked the file.
++        let stamp = std::time::SystemTime::now()
++            .duration_since(std::time::UNIX_EPOCH)
++            .map(|d| d.subsec_nanos())
++            .unwrap_or(0);
++        let pq_path = std::env::temp_dir()
++            .join(format!("xous-app-uf2-dev-pq-{}-{}.key", std::process::id(), stamp));
++        {
++            use std::io::Write as _;
++            let mut pq_file = std::fs::OpenOptions::new().write(true).create_new(true).open(&pq_path)?;
++            pq_file.write_all(&DEV_KEY_PQ)?;
++        }
++        let pq_args: Option<(std::path::PathBuf, Option<std::path::PathBuf>)> =
++            Some((pq_path.clone(), None));
++        let encrypted = swap_buffer.encrypt_to(
++            &mut swap,
++            &private_key,
++            Some(anti_rollback as usize),
++            git_rev,
++            semver,
++            pq_args,
++        );
++        std::fs::remove_file(&pq_path).ok();
++        encrypted?;
++        // --- end local repair ---
+ 
+         // generate a uf2 file
+         let swap_uf2 = "swap.uf2";
+@@ -217,7 +259,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
+             Some("app"),
+             Some(anti_rollback as usize),
+             false,
+-            Some((DEV_KEY_PQ, None)),
++            Some((DEV_KEY_PQ, None::<&str>)), // local repair: P was unconstrained
+         )?;
+ 
+         let app_uf2 = "apps.uf2";
+diff --git a/tools/src/swap_writer.rs b/tools/src/swap_writer.rs
+index 505b8b189..01e12a4b3 100644
+--- a/tools/src/swap_writer.rs
++++ b/tools/src/swap_writer.rs
+@@ -172,7 +172,9 @@ impl SwapWriter {
+             load_pq_key_bytes(pq_private_key)
+                 .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?,
+         )
+-        .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "Can't sign swap image"))?;
++        .map_err(|e| {
++            std::io::Error::new(std::io::ErrorKind::Other, format!("Can't sign swap image: {}", e))
++        })?;
+         // write the header, less space for the signature
+         f.write(
+             &unsigned_header

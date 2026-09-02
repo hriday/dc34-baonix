@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = ["crates/rv64", "crates/rv64-host", "crates/rv64-difftest", "crates/rv64-proto"]
+
+[workspace.package]
+edition = "2021"

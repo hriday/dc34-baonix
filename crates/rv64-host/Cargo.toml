@@ -1,0 +1,24 @@
+[package]
+name = "rv64-host"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+rv64 = { path = "../rv64" }
+rv64-proto = { path = "../rv64-proto" }
+# The third dependency this crate has ever had, and it buys exactly one thing:
+# `tcgetattr`/`tcsetattr`, so `serve --port` can put a USB-CDC tty into raw mode
+# before a binary frame crosses it. See `src/rawtty.rs` for why that is not
+# optional and why an `stty` in the README is not a substitute.
+#
+# `libc` rather than `termios`, `nix` or `serialport`: it is the smallest thing
+# that can do this, it is already in `Cargo.lock` at 0.2.189 as a transitive
+# dependency, so declaring it resolves nothing new, and it adds no build script
+# and no further transitive edges. A serial crate would bring a port enumerator,
+# a baud-rate abstraction and a cross-platform layer this crate has no use for
+# -- USB-CDC ignores line coding, and the only platforms in play here are the
+# two that have termios.
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"

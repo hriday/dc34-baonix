@@ -1,0 +1,340 @@
+# Kconfig overrides applied on top of `make ARCH=riscv defconfig`.
+#
+# This file is the *intent*; `nix/guest/kernel.config` is the generated
+# artifact. Regenerate with `nix build .#kernel-config` (see
+# nix/guest/kernel-config.nix, which also fails the build if any line below
+# is silently dropped by `olddefconfig`).
+#
+# The guest hardware is exactly what `nix/guest/guest.dts` describes: one
+# rv64imac hart with Sv39, 32 MiB of RAM at 0x8000_0000, a CLINT, and a
+# polled 8250 UART. There is no PLIC, no PCI, no block device, no NIC, no
+# framebuffer and no RNG. Everything disabled below is disabled because the
+# machine has no such device, or because the emulator cannot execute the
+# instructions the option would emit.
+
+# ---------------------------------------------------------------------------
+# Console. These four lines are the difference between a diagnosable boot
+# failure and a blank screen.
+# ---------------------------------------------------------------------------
+# `earlycon=sbi` in the DT bootargs is the only console that exists before
+# 8250 probe. In 6.12 drivers/tty/serial/earlycon-riscv-sbi.c picks the
+# legacy v0.1 `console_putchar` path when DBCN is absent *and*
+# CONFIG_RISCV_SBI_V01 is enabled; our SBI (crates/rv64/src/sbi.rs) reports
+# spec v0.2 and implements EID 0x01 but not DBCN, so without SBI_V01 the
+# earlycon registers nothing at all and returns -ENODEV.
+CONFIG_RISCV_SBI_V01=y
+CONFIG_SERIAL_EARLYCON_RISCV_SBI=y
+# CONFIG_RISCV_SBI_V01 is doubly load-bearing: `sbi_set_power_off()` is
+# compiled out without it, and Linux only registers the SRST poweroff for
+# SBI spec >= 0.3. Our SBI reports 0.2, so legacy shutdown (EID 0x08) is the
+# only way the guest can halt the emulator.
+CONFIG_SERIAL_8250=y
+CONFIG_SERIAL_8250_CONSOLE=y
+# Binds the `ns16550a` node in guest.dts. Without it the DT UART is never
+# probed and `console=ttyS0` never appears.
+CONFIG_SERIAL_OF_PLATFORM=y
+CONFIG_PRINTK=y
+CONFIG_PRINTK_TIME=y
+CONFIG_TTY=y
+# One UART exists; the default of 4 just reserves structs for ports that
+# will never be probed.
+CONFIG_SERIAL_8250_NR_UARTS=1
+CONFIG_SERIAL_8250_RUNTIME_UARTS=1
+# Synopsys DesignWare 8250 variant: a different UART, not ours.
+# CONFIG_SERIAL_8250_DW is not set
+# No PCI bus, so no PCI serial ports.
+# CONFIG_SERIAL_8250_PCI is not set
+# No display and no keyboard: the virtual terminal layer has nothing to
+# drive and `console=ttyS0` does not go through it.
+# CONFIG_VT is not set
+# CONFIG_LEGACY_PTYS is not set
+# No virtio transport exists on this bus.
+# CONFIG_VIRTIO_CONSOLE is not set
+
+# ---------------------------------------------------------------------------
+# Base platform / ISA. The emulator implements rv64imac + Sv39 and nothing
+# else; an instruction outside that set is an illegal-instruction trap.
+# ---------------------------------------------------------------------------
+CONFIG_64BIT=y
+CONFIG_MMU=y
+CONFIG_RISCV_ISA_C=y
+# No F/D registers in the emulator.
+# CONFIG_FPU is not set
+# No V extension, and RISCV_ISA_V also drags in vector context-switch code.
+# CONFIG_RISCV_ISA_V is not set
+# Every option below is an ISA extension the emulator does not implement.
+# They are all alternative-patched off at runtime against the DT's
+# `riscv,isa = "rv64imac"`; disabling them at build time removes the code
+# rather than trusting the patcher to skip it.
+#
+# Note that this does *not* remove CONFIG_RISCV_ALTERNATIVE: `config RISCV`
+# selects it unconditionally, and the vendor errata below select it too, so
+# the patcher is built in and does run at boot. The errata are the reason
+# that matters. ERRATA_THEAD_CMO patches in T-Head's custom `th.dcache.*`
+# opcodes, which this emulator would trap as illegal instructions. Nothing
+# matches today only because `sbi_get_mvendorid` returns 0 and guest.dts
+# names no `mvendorid` — a single change to either would start injecting
+# instructions the CPU cannot execute. Disabling the errata removes that
+# path entirely rather than relying on a vendor ID staying zero.
+# CONFIG_ERRATA_SIFIVE is not set
+# CONFIG_ERRATA_THEAD is not set
+# CONFIG_ERRATA_ANDES is not set
+# CONFIG_RISCV_ISA_SVNAPOT is not set
+# CONFIG_RISCV_ISA_SVPBMT is not set
+# CONFIG_RISCV_ISA_ZAWRS is not set
+# CONFIG_RISCV_ISA_ZBA is not set
+# CONFIG_RISCV_ISA_ZBB is not set
+# CONFIG_RISCV_ISA_ZBC is not set
+# CONFIG_RISCV_ISA_ZICBOM is not set
+# CONFIG_RISCV_ISA_ZICBOZ is not set
+# Single hart. This is not only a size trim: with SMP=n,
+# `riscv_use_sbi_for_rfence()` is a compile-time false (asm/sbi.h), so every
+# TLB and I-cache flush stays local. Our SBI implements no RFENCE extension
+# and no legacy remote-fence calls, so an SMP kernel would silently skip TLB
+# invalidation.
+# CONFIG_SMP is not set
+# CONFIG_NUMA is not set
+# Runtime text patching for static keys. Nothing here is hot enough to need
+# it, and not patching kernel text is one less thing to go wrong.
+# CONFIG_JUMP_LABEL is not set
+# No H extension.
+# CONFIG_VIRTUALIZATION is not set
+# DT-only machine; there is no ACPI table and no UEFI firmware. The
+# emulator jumps straight to 0x8020_0000 with a1 = DTB.
+# CONFIG_ACPI is not set
+# CONFIG_EFI stays enabled, and that is a decision rather than an oversight.
+# It cannot be turned off without CONFIG_NONPORTABLE, because `config
+# PORTABLE` is `default !NONPORTABLE` and selects EFI. On a direct boot the
+# stub is inert — riscv head.S's EFI preamble is `c.li s4,-13` (the bytes
+# "MZ") followed by `j _start_kernel`, a legal rv64c instruction pair that
+# the emulator executes harmlessly — so the only cost is Image size, which
+# is not worth flipping a symbol whose whole purpose is to unlock
+# configurations upstream considers unsupportable.
+# CONFIG_COMPAT is not set
+# CONFIG_KEXEC is not set
+# CONFIG_KEXEC_FILE is not set
+# No power management hardware and nothing to suspend to.
+# CONFIG_SUSPEND is not set
+# CONFIG_CPU_FREQ is not set
+# The single biggest lever on Image size, and it is not obvious from the
+# option's name. arch/riscv/include/asm/set_memory.h makes SECTION_ALIGN
+# `1 << 21` when STRICT_KERNEL_RWX is on, and arch/riscv/kernel/vmlinux.lds.S
+# aligns text, init, rodata and data to it — so a kernel with ~4 MiB of real
+# content is emitted as a 10.6 MiB Image, ~6 MiB of which is zero padding.
+# With it off SECTION_ALIGN drops to L1_CACHE_BYTES. That padding is not
+# free: crates/rv64-host writes the Image verbatim into guest RAM, so it
+# would cost roughly a fifth of the guest's 32 MiB to buy W^X on kernel text
+# for a single-purpose guest that runs one fixed initramfs. Measured both
+# ways; see the Task 19 report.
+# CONFIG_STRICT_KERNEL_RWX is not set
+# One flat 32 MiB bank at a fixed base: FLATMEM is both smaller and cheaper
+# than the section machinery SPARSEMEM needs. The companion "is not set"
+# line is required, not decorative: these are members of one Kconfig choice,
+# and leaving defconfig's pick in the file would leave the choice with two
+# selected members.
+# CONFIG_SPARSEMEM_MANUAL is not set
+CONFIG_FLATMEM_MANUAL=y
+# 250 Hz costs 2.5x the timer interrupts of 100 Hz, and every one of them is
+# an SBI set_timer ecall plus a trap through the emulator.
+# CONFIG_HZ_250 is not set
+CONFIG_HZ_100=y
+CONFIG_NO_HZ_IDLE=y
+# The guest's SoC is none of these; each one gates a pile of clock, pinctrl
+# and PHY drivers that would otherwise be built in once MODULES=n turns
+# defconfig's `=m` entries into `=y`.
+# CONFIG_ARCH_MICROCHIP is not set
+# CONFIG_ARCH_RENESAS is not set
+# CONFIG_ARCH_SIFIVE is not set
+# CONFIG_ARCH_SOPHGO is not set
+# CONFIG_SOC_STARFIVE is not set
+# CONFIG_ARCH_SUNXI is not set
+# CONFIG_ARCH_THEAD is not set
+# CONFIG_ARCH_CANAAN is not set
+# Not the QEMU virt machine either. This one is worth calling out
+# separately: ARCH_VIRT selects POWER_RESET, POWER_RESET_SYSCON_POWEROFF and
+# the Goldfish RTC, none of which have a node in guest.dts, so leaving it on
+# builds in a poweroff path that cannot work. With it off, halting the guest
+# goes through `pm_power_off = sbi_shutdown` — which exists only because of
+# CONFIG_RISCV_SBI_V01 above.
+# CONFIG_ARCH_VIRT is not set
+# (CONFIG_SIFIVE_PLIC has no prompt and `config RISCV` selects it
+# unconditionally, so it cannot be turned off. Harmless: the DT has no PLIC
+# node, the driver never probes, the UART is left with irq 0 and 8250 falls
+# back to its polling timer.)
+
+# ---------------------------------------------------------------------------
+# Kernel core trims.
+# ---------------------------------------------------------------------------
+CONFIG_EXPERT=y
+# (The brief also lists CONFIG_EMBEDDED=y and CONFIG_SLUB=y. Neither is a
+# settable symbol in 6.12: EMBEDDED was removed upstream and folded into
+# EXPERT, and SLUB is `def_bool y` in mm/Kconfig since SLAB was deleted, so
+# it is always on. Requesting either here would fail the generator's check
+# for no reason.)
+# CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE is not set
+CONFIG_CC_OPTIMIZE_FOR_SIZE=y
+# Nothing loads modules; there is no filesystem to load them from.
+# CONFIG_MODULES is not set
+# There is no block device. The root filesystem is an initramfs cpio
+# unpacked into rootfs, which needs no block layer at all — the pairing of
+# BLOCK=n with BLK_DEV_INITRD=y below is deliberate and is verified by
+# nix/guest/kernel-config.nix.
+# CONFIG_BLOCK is not set
+# CONFIG_MD is not set
+# CONFIG_LIBNVDIMM is not set
+# CONFIG_SWAP is not set
+# No NIC in the DT, so the whole stack (and defconfig's netfilter/IPVS/
+# bridge/VLAN module set) goes.
+# CONFIG_NET is not set
+# CONFIG_PCI is not set
+# Container and instrumentation infrastructure a single-purpose guest with
+# 32 MiB of RAM will never use; cgroups in particular cost per-page memory.
+# CONFIG_CGROUPS is not set
+# CONFIG_NAMESPACES is not set
+# CONFIG_CHECKPOINT_RESTORE is not set
+# CONFIG_BPF_SYSCALL is not set
+# CONFIG_PROFILING is not set
+# CONFIG_IKCONFIG is not set
+# CONFIG_SYSVIPC is not set
+# CONFIG_POSIX_MQUEUE is not set
+# CONFIG_ELF_CORE is not set
+# CONFIG_AIO is not set
+# CONFIG_IO_URING is not set
+# LSM framework: nothing in the guest sets a policy.
+# CONFIG_SECURITY is not set
+
+# ---------------------------------------------------------------------------
+# Root filesystem: an external initramfs, loaded by the emulator.
+# ---------------------------------------------------------------------------
+CONFIG_BLK_DEV_INITRD=y
+# Empty: the cpio is supplied at boot, not linked into the Image. Task 20
+# produces it.
+CONFIG_INITRAMFS_SOURCE=""
+CONFIG_RD_GZIP=y
+# Every other decompressor is dead weight; the initramfs is either plain or
+# gzip.
+# CONFIG_RD_BZIP2 is not set
+# CONFIG_RD_LZMA is not set
+# CONFIG_RD_XZ is not set
+# CONFIG_RD_LZO is not set
+# CONFIG_RD_LZ4 is not set
+# CONFIG_RD_ZSTD is not set
+CONFIG_BINFMT_ELF=y
+# `rdinit=/init` may well be a `#!/bin/sh` script.
+CONFIG_BINFMT_SCRIPT=y
+CONFIG_DEVTMPFS=y
+CONFIG_DEVTMPFS_MOUNT=y
+CONFIG_TMPFS=y
+CONFIG_PROC_FS=y
+CONFIG_SYSFS=y
+CONFIG_MULTIUSER=y
+# All of these need either BLOCK or NET, or a disk image we do not have.
+# CONFIG_EXT4_FS is not set
+# CONFIG_BTRFS_FS is not set
+# CONFIG_OVERLAY_FS is not set
+# CONFIG_AUTOFS_FS is not set
+# CONFIG_HUGETLBFS is not set
+
+# ---------------------------------------------------------------------------
+# Device drivers: the guest has a UART and a CLINT. That is the whole list.
+# ---------------------------------------------------------------------------
+# CONFIG_MTD is not set
+# CONFIG_INPUT is not set
+# CONFIG_HW_RANDOM is not set
+# CONFIG_I2C is not set
+# CONFIG_SPI is not set
+# CONFIG_PINCTRL is not set
+# CONFIG_GPIOLIB is not set
+# CONFIG_POWER_RESET is not set
+# CONFIG_HWMON is not set
+# CONFIG_THERMAL is not set
+# CONFIG_WATCHDOG is not set
+# CONFIG_REGULATOR is not set
+# CONFIG_MEDIA_SUPPORT is not set
+# CONFIG_DRM is not set
+# CONFIG_FB is not set
+# CONFIG_SOUND is not set
+# CONFIG_USB_SUPPORT is not set
+# CONFIG_MMC is not set
+# CONFIG_RTC_CLASS is not set
+# CONFIG_DMADEVICES is not set
+# CONFIG_VIRTIO_MENU is not set
+# RPMSG_VIRTIO has to be named explicitly: it selects VIRTIO rather than
+# depending on VIRTIO_MENU, so turning the virtio menu off does not reach
+# it, and it in turn selects the promptless CONFIG_RPMSG.
+# CONFIG_RPMSG_VIRTIO is not set
+# CONFIG_RPMSG is not set
+# CONFIG_PM_DEVFREQ is not set
+# CONFIG_IIO is not set
+# CONFIG_GENERIC_PHY is not set
+# CONFIG_NVMEM is not set
+# A different RISC-V UART (SiFive's), which defaults on for RISCV and would
+# otherwise be built in next to the 8250 we actually have.
+# CONFIG_SERIAL_SIFIVE is not set
+# PS/2 serio port layer; defaults on but has no consumer once INPUT is off.
+# CONFIG_SERIO is not set
+# Goldfish virtual devices belong to the Android emulator's platform.
+# CONFIG_GOLDFISH is not set
+# No clock, reset, mailbox, IOMMU, power-supply, extcon, backlight or CEC
+# hardware is described in guest.dts, and with every SoC above disabled
+# there is no driver left that would consume these frameworks. The 8250
+# takes its baud base from the UART node's `clock-frequency`, not from a
+# clock provider. (CONFIG_COMMON_CLK stays: `config RISCV` selects it
+# unconditionally. With no clock driver left it registers nothing.)
+# CONFIG_RESET_CONTROLLER is not set
+# CONFIG_MAILBOX is not set
+# CONFIG_IOMMU_SUPPORT is not set
+# CONFIG_POWER_SUPPLY is not set
+# CONFIG_EXTCON is not set
+# CONFIG_BACKLIGHT_CLASS_DEVICE is not set
+# CONFIG_MEDIA_CEC_SUPPORT is not set
+# CONFIG_MFD_SYSCON is not set
+# Nothing requests firmware; there is no filesystem to load it from before
+# the initramfs is up anyway.
+# CONFIG_FW_LOADER is not set
+
+# Kernel facilities with no consumer in this guest.
+# The guest profiles nothing. Disabling PERF_EVENTS also removes
+# RISCV_PMU_SBI, which would otherwise probe an SBI PMU extension our
+# firmware stub does not implement, and RISCV_PMU_LEGACY.
+# CONFIG_PERF_EVENTS is not set
+# There is nowhere to write a core dump to.
+# CONFIG_COREDUMP is not set
+# CONFIG_KEYS is not set
+# CONFIG_SECRETMEM is not set
+# CONFIG_CONFIGFS_FS is not set
+# CONFIG_DAX is not set
+# Character-set translation exists for the FAT/ISO9660 drivers that went
+# away with BLOCK.
+# CONFIG_NLS is not set
+# EFI is on (see above) but its optional consumers are not: there is no
+# UEFI firmware to expose variables. (CONFIG_EFI_ESRT has no prompt and is
+# `default y` under EFI, so it cannot be turned off independently.)
+# CONFIG_EFIVAR_FS is not set
+
+# ---------------------------------------------------------------------------
+# Debug options. riscv defconfig turns on a large lock/VM debug set that is
+# aimed at kernel developers on real hardware; every one of them costs both
+# Image size and executed instructions, which on this emulator is wall-clock
+# time. KALLSYMS is deliberately kept so an early oops is readable.
+# ---------------------------------------------------------------------------
+CONFIG_KALLSYMS=y
+# CONFIG_KALLSYMS_ALL is not set
+# CONFIG_DEBUG_FS is not set
+# CONFIG_DEBUG_PAGEALLOC is not set
+# CONFIG_SCHED_STACK_END_CHECK is not set
+# CONFIG_DEBUG_VM is not set
+# CONFIG_DEBUG_MEMORY_INIT is not set
+# CONFIG_DEBUG_PER_CPU_MAPS is not set
+# CONFIG_SOFTLOCKUP_DETECTOR is not set
+# CONFIG_WQ_WATCHDOG is not set
+# CONFIG_DEBUG_RT_MUTEXES is not set
+# CONFIG_DEBUG_SPINLOCK is not set
+# CONFIG_DEBUG_MUTEXES is not set
+# CONFIG_DEBUG_RWSEMS is not set
+# CONFIG_DEBUG_ATOMIC_SLEEP is not set
+# CONFIG_DEBUG_LIST is not set
+# CONFIG_DEBUG_PLIST is not set
+# CONFIG_DEBUG_SG is not set
+# CONFIG_RCU_EQS_DEBUG is not set
+# CONFIG_MEMTEST is not set

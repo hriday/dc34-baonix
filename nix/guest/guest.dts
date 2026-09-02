@@ -1,0 +1,143 @@
+/dts-v1/;
+
+/ {
+    #address-cells = <2>;
+    #size-cells = <2>;
+    compatible = "baochip,rv64emu";
+    model = "baochip rv64 emulator";
+
+    chosen {
+        // earlycon=sbi routes early kernel output through the SBI
+        // console_putchar call (Task 14) before the 8250 driver has
+        // initialized, so a failure before that point is still visible
+        // instead of a blank screen. If SBI earlycon ever misbehaves, the
+        // fallback is `earlycon=uart8250,mmio,0x10000000` (must match
+        // serial@10000000's reg below).
+        bootargs = "console=ttyS0 earlycon=sbi rdinit=/init";
+        stdout-path = "/soc/serial@10000000";
+
+        // Placeholders the CLI runner overwrites in place when it is given
+        // `--initrd` (see `rv64_host::fdt::set_u64`). They cannot be
+        // written here, because the addresses depend on the kernel's
+        // memory footprint and this DTB's own length — neither known until
+        // load time.
+        //
+        // Left at zero they are inert, not dangerous:
+        // `early_init_dt_check_for_initrd()` reads both, computes
+        // `phys_initrd_size = end - start`, and `reserve_initrd_mem()`
+        // returns immediately on `!phys_initrd_size`. So a run without
+        // `--initrd` behaves exactly as if these properties were absent.
+        //
+        // Two cells each: `of_read_number(prop, len/4)` reads however many
+        // cells the property carries, so the 8-byte width here is what
+        // makes these 64-bit addresses. `set_u64` refuses to patch a
+        // property that is not exactly 8 bytes, so narrowing these would
+        // fail loudly rather than silently truncating an address.
+        // `linux,initrd-end` is exclusive.
+        linux,initrd-start = <0x0 0x0>;
+        linux,initrd-end = <0x0 0x0>;
+
+        // Cheap insurance against `getrandom()` blocking in userspace.
+        // There is no hardware RNG in this machine, and an emulator whose
+        // cycle counter advances deterministically is a poor jitter source,
+        // so the CRNG can take a long time to initialize — a hang with no
+        // diagnostic. `drivers/of/fdt.c` feeds this to
+        // `add_bootloader_randomness()`, which credits it in full and
+        // initializes the CRNG immediately, then NOPs the property out so
+        // it cannot be read back by the guest.
+        //
+        // A fixed seed is *correct here and nowhere else*: this is a
+        // deterministic emulator whose whole guest image is public and
+        // reproducible, so there is no secret to protect and pretending
+        // otherwise by seeding from the host would only make runs
+        // irreproducible.
+        rng-seed = <0x5641434b 0x42414f43 0x48495021 0x64633334
+                    0x726f6c6c 0x74686564 0x69636520 0x6e6f7721>;
+    };
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        // The guest's belief about how fast `mtime` advances. It does not
+        // have to match any real clock — this runner ticks the CLINT by 1
+        // per retired instruction (see `rv64_host::run_until`), so the
+        // guest will believe one second has passed every 10,000,000
+        // instructions executed, not per wall-clock second. Nothing breaks
+        // if this is "wrong" in the wall-clock sense; it only shifts the
+        // guest's timeouts and scheduling relative to real time.
+        timebase-frequency = <10000000>;
+
+        cpu@0 {
+            device_type = "cpu";
+            reg = <0>;
+            status = "okay";
+            compatible = "riscv";
+            riscv,isa = "rv64imac";
+            mmu-type = "riscv,sv39";
+
+            cpu0_intc: interrupt-controller {
+                #interrupt-cells = <1>;
+                interrupt-controller;
+                compatible = "riscv,cpu-intc";
+            };
+        };
+    };
+
+    memory@80000000 {
+        device_type = "memory";
+        reg = <0x0 0x80000000 0x0 0x02000000>;
+    };
+
+    soc {
+        #address-cells = <2>;
+        #size-cells = <2>;
+        compatible = "simple-bus";
+        ranges;
+
+        // Present and harmless, but not what drives the guest's clock: an
+        // S-mode Linux guest cannot reach `mtimecmp` (M-mode-only memory),
+        // so timekeeping instead goes through `timer-riscv`, bound off
+        // cpu0's `riscv,isa`/intc above, driven by SBI `set_timer` plus the
+        // STIP forwarding this emulator implements (Task 14). This node is
+        // included because the CLINT device really is here at this address
+        // and MSIP/MTIP really are wired to the CPU's interrupt controller
+        // as shown, not because Linux reads timer config from it.
+        clint@2000000 {
+            compatible = "riscv,clint0";
+            interrupts-extended = <&cpu0_intc 3 &cpu0_intc 7>;
+            reg = <0x0 0x2000000 0x0 0x10000>;
+        };
+
+        serial@10000000 {
+            compatible = "ns16550a";
+            reg = <0x0 0x10000000 0x0 0x100>;
+            clock-frequency = <3686400>;
+            status = "okay";
+
+            // Belt-and-braces. `compatible = "ns16550a"` already makes the
+            // `8250_of` driver set UPF_FIXED_TYPE, and
+            // `uart_configure_port` only runs `autoconfig()` when that flag
+            // is absent — so the loopback probe below should never fire.
+            // But if it ever does: our UART's MSR always reads 0, so
+            // `autoconfig()`'s loopback test (MCR = LOOP|0x0A, then require
+            // MSR & 0xF0 == 0x90) fails, the port is left PORT_UNKNOWN, and
+            // the console is never registered — a silent, total boot
+            // failure with no output at all, not merely degraded output.
+            // Do not remove this thinking it is redundant with
+            // `compatible`: it is the second, independent guard against
+            // the single worst failure mode this project has.
+            no-loopback-test;
+
+            // Made explicit rather than left to defaults: this bus drops
+            // the access size at the UART boundary (see `Bus::store` in
+            // `crates/rv64/src/bus.rs`), so a wider MMIO access here would
+            // write one byte to THR and silently discard the rest.
+            // reg-shift = 0 and reg-io-width = 1 are already the defaults
+            // when unspecified, so this line changes no behavior — it just
+            // writes down a contract that is otherwise undocumented
+            // anywhere a future reader would find it.
+            reg-shift = <0>;
+            reg-io-width = <1>;
+        };
+    };
+};

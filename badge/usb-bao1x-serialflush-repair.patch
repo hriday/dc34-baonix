@@ -1,0 +1,43 @@
+diff --git a/services/usb-bao1x/src/main.rs b/services/usb-bao1x/src/main.rs
+index 166cae31c..b48ae8ce0 100644
+--- a/services/usb-bao1x/src/main.rs
++++ b/services/usb-bao1x/src/main.rs
+@@ -729,12 +729,18 @@ pub(crate) fn main_hw() -> ! {
+                 serial_listener.take();
+             }
+             Opcode::SerialFlush => msg_scalar_unpack!(msg, _, _, _, _, {
+-                if cu.device.state() != usb_device::device::UsbDeviceState::Configured {
+-                    continue;
++                // A `continue` here used to skip the listener-release block below, so a
++                // client blocked in serial_wait_binary() could never be woken while the
++                // device was un-configured (unplugged, charge-only port, hub that does
++                // not enumerate) -- the one situation in which the flush watchdog is the
++                // client's only way out. Only the hardware flush needs a configured
++                // device; releasing a pending listener with whatever is buffered does
++                // not, so the state check now guards just that call.
++                if cu.device.state() == usb_device::device::UsbDeviceState::Configured {
++                    // The interrupt handler may access the same usbd-serial state through
++                    // UsbDevice::poll(), so the flush must use the IRQ-safe wrapper.
++                    cu.serial_flush_irq_safe().ok();
+                 }
+-                // The interrupt handler may access the same usbd-serial state through
+-                // UsbDevice::poll(), so the flush must use the IRQ-safe wrapper.
+-                cu.serial_flush_irq_safe().ok();
+                 // this tries to return any data that's pending within the main loop's buffers
+                 match serial_listen_mode {
+                     SerialListenMode::BinaryListener => {
+@@ -745,7 +751,13 @@ pub(crate) fn main_hw() -> ! {
+                                 };
+                                 let mut buf = response.to_original::<UsbSerialBinary, _>().unwrap();
+                                 let chars_avail = serial_buf.len().min(SERIAL_BINARY_BUFLEN);
+-                                buf.d.copy_from_slice(serial_buf.drain(..chars_avail).as_slice());
++                                // `buf.d` is the client's freshly constructed `Vec::new()`
++                                // (lib.rs `serial_wait_binary`), i.e. length 0, so
++                                // copy_from_slice panics unless chars_avail == 0 -- the flush
++                                // could only ever deliver when there was nothing to deliver.
++                                // The IRQ delivery path above uses extend_from_slice; this is
++                                // the same append, and is the form this call site wants.
++                                buf.d.extend_from_slice(serial_buf.drain(..chars_avail).as_slice());
+                                 response.replace(buf).unwrap();
+                                 // the rx_msg will drop and respond to the listener
+                             }

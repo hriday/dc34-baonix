@@ -1,0 +1,6 @@
+[package]
+name = "rv64-proto"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]

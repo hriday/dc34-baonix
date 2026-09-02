@@ -1,0 +1,120 @@
+
+=== tracing /dev/cu.usbmodemFL1TQZ3 at 14:15:46 ===
+[trace] /dev/cu.usbmodemFL1TQZ3, backing /tmp/rv64-guest-mem.img
+[text] INFO:bao1x_hal_service::servers::keyboard: keyboard listener _Modal Dialog Server_ -> 18 (services/bao1x-hal-service/src/servers/keyboard.rs:380)
+
+[  0.000] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 1)
+[  0.005] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 2)
+[  0.011] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 3)
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 143, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 81, in main
+    chunk = os.read(fd, 4096)
+OSError: [Errno 6] Device not configured
+=== detached at 14:25:12 ===
+
+=== tracing /dev/cu.usbmodemWBB5BP09459731 at 14:25:18 ===
+[trace] /dev/cu.usbmodemWBB5BP09459731, backing /tmp/rv64-guest-mem.img
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 143, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 81, in main
+    chunk = os.read(fd, 4096)
+OSError: [Errno 6] Device not configured
+=== detached at 14:27:17 ===
+
+=== tracing /dev/cu.usbmodemFL1TQZ3 at 14:27:31 ===
+[trace] /dev/cu.usbmodemFL1TQZ3, backing /tmp/rv64-guest-mem.img
+[  1.712] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 1)
+[  1.963] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 2)
+[  2.214] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 3)
+[  2.465] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 4)
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 143, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 81, in main
+    chunk = os.read(fd, 4096)
+OSError: [Errno 6] Device not configured
+=== detached at 14:27:34 ===
+
+=== tracing /dev/cu.usbmodemFL1TQZ1 at 14:27:37 ===
+[trace] /dev/cu.usbmodemFL1TQZ1, backing /tmp/rv64-guest-mem.img
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 143, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 81, in main
+    chunk = os.read(fd, 4096)
+OSError: [Errno 6] Device not configured
+=== detached at 14:27:39 ===
+
+=== tracing /dev/cu.usbmodemFL1TQZ3 at 14:28:18 ===
+[trace] /dev/cu.usbmodemFL1TQZ3, backing /tmp/rv64-guest-mem.img
+[text] INFO:bao1x_hal_service::servers::keyboard: keyboard listener _Modal Dialog Server_ -> 18 (services/bao1x-hal-service/src/servers/keyboard.rs:380)
+
+[  1.719] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 1)
+[  1.970] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 2)
+[  2.221] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 3)
+[  2.473] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 4)
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 143, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 81, in main
+    chunk = os.read(fd, 4096)
+OSError: [Errno 6] Device not configured
+=== detached at 14:28:23 ===
+
+=== tracing /dev/cu.usbmodemFL1TQZ1 at 14:28:26 ===
+[trace] /dev/cu.usbmodemFL1TQZ1, backing /tmp/rv64-guest-mem.img
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 143, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 81, in main
+    chunk = os.read(fd, 4096)
+OSError: [Errno 6] Device not configured
+=== detached at 14:28:50 ===
+
+=== tracing /dev/cu.usbmodemFL1TQZ3 at 14:28:56 ===
+[trace] /dev/cu.usbmodemFL1TQZ3, backing /tmp/rv64-guest-mem.img
+[  1.713] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 1)
+[  1.964] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 2)
+[  2.215] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 3)
+[  2.466] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 4)
+=== detached at 14:29:51 ===
+
+=== tracing /dev/cu.usbmodemFL1TQZ3 at 14:29:51 ===
+[trace] /dev/cu.usbmodemFL1TQZ3, backing /tmp/rv64-guest-mem.img
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 154, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 82, in main
+    chunk = os.read(fd, 4096)
+OSError: [Errno 6] Device not configured
+=== detached at 14:30:05 ===
+
+=== tracing /dev/cu.usbmodemFL1TQZ3 at 14:30:10 ===
+[trace] /dev/cu.usbmodemFL1TQZ3, backing /tmp/rv64-guest-mem.img
+[  1.638] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 1)
+[  1.889] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 2)
+[  2.140] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 3)
+[  2.391] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 4)
+[text] ERR :rv64_badge::badge: rv64: cannot start the guest: read 0x80200038 failed: no answer after 4 attempt(s); measured 1024 ms total, 251 ms on the last attempt, 6 deliveries (16436 bytes) ever received. Policy: 2000 ms total, 250 ms per attempt, 3 re-sends. Reading: bytes arrived but never formed the frame asked for: framing, CRC, truncation, or an answer for another page [reader: parked=true stopped=false lend_errs=0 unparks=0 primed=true] (src/main.rs:164)
+[text] 
+
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 154, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/target/tools/trace-serve.py", line 82, in main
+    chunk = os.read(fd, 4096)
+OSError: [Errno 6] Device not configured
+=== detached at 14:30:54 ===
+
+=== tracing /dev/cu.usbmodemFL1TQZ3 at 14:31:00 ===
+[trace] /dev/cu.usbmodemFL1TQZ3, backing /tmp/rv64-guest-mem.img
+[  1.603] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 1)
+[  1.854] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 2)
+[  2.106] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 3)
+[  2.356] ReadReq page=512 (0x200000) -> ReadResp 4109 bytes written (served 4)
+[text] ERR :rv64_badge::badge: rv64: cannot start the guest: read 0x80200038 failed: no answer after 4 attempt(s); measured 1024 ms total, 251 ms on the last attempt, 9 deliveries (16436 bytes) ever received. Policy: 2000 ms total, 250 ms per attempt, 3 re-sends. Reading: bytes arrived but never formed the frame asked for: framing, CRC, truncation, or an answer for another page [reader: parked=true stopped=false lend_errs=0 unparks=0 primed=true] (src/main.rs:164)
+[text] 
+

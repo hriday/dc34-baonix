@@ -1,0 +1,8 @@
+[package]
+name = "rv64-difftest"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+rv64 = { path = "../rv64" }
+rv64-host = { path = "../rv64-host" }

@@ -1,0 +1,67 @@
+[package]
+name = "probe"
+version = "0.1.0"
+edition = "2021"
+
+# Standalone workspace on purpose. This crate builds for
+# riscv32imac-unknown-xous-elf against a custom sysroot; it must not be pulled
+# into the host workspace at ../../Cargo.toml.
+[workspace]
+
+[dependencies]
+xous = "0.9.70"
+log-server = { package = "xous-api-log", version = "0.1.69" }
+ticktimer = { package = "xous-api-ticktimer", version = "0.9.70" }
+log = "0.4.14"
+utralib = { version = "0.1.27", default-features = false }
+usb-bao1x = { git = "https://github.com/betrusted-io/xous-core", rev = "9844906ddc1214438d0d942d2db2922846ae4722", features = [
+    "bao1x",
+    "board-baosec",
+    "oem-baosec-lite",
+] }
+xous-swapper = { git = "https://github.com/betrusted-io/xous-core", rev = "9844906ddc1214438d0d942d2db2922846ae4722", features = [
+    "board-baosec",
+] }
+# Used directly, for one thing: looking up the swapper's server so the probe can
+# send `Opcode::GarbageCollect` itself. `Swapper::garbage_collect_pages()` reads
+# the wrong field of the reply and can only ever return 0 -- see `gc_free_pages`
+# in main.rs. The crate is already in the lock as a transitive dependency at this
+# exact version, so declaring it resolves nothing new.
+xous-api-names = "0.9.71"
+# Used directly by `wait_binary()`, which inlines the three lines of
+# `usb_bao1x::UsbHid::serial_wait_binary()` so the real `xous::Error` from
+# `lend_mut` survives instead of being flattened to `InternalError` and
+# `.expect()`ed. Both are already in the lock as transitive dependencies at these
+# versions, so declaring them resolves nothing new.
+xous-ipc = "0.10.10"
+num-traits = { version = "0.2.14", default-features = false }
+# Not used directly. rand_core pulls it in via bao1x-hal-service and aes, and
+# stock getrandom 0.2.x has no riscv32-xous backend -- it hard `compile_error!`s.
+# xous-core carries a forked 0.2.12 with one; pin + patch exactly as
+# services/dc34-console/Cargo.toml does.
+getrandom = "=0.2.12"
+# Not used directly either. bao1x-hal pulls ux-api in with default features off,
+# which leaves ActionType variantless (enum_dispatch then fails to compile) and
+# leaves blitstr2's font tables cfg'd out on a xous target. Declaring it here
+# with defaults on plus `bao1x` fixes both -- this is what dc34-console does.
+ux-api = { git = "https://github.com/betrusted-io/xous-core", rev = "9844906ddc1214438d0d942d2db2922846ae4722", features = [
+    "board-baosec",
+    "bao1x",
+] }
+
+[patch.crates-io.getrandom]
+git = "https://github.com/betrusted-io/xous-core"
+rev = "9844906ddc1214438d0d942d2db2922846ae4722"
+
+[features]
+default = []
+# The badge's feature triple. usb-bao1x and xous-swapper already carry their own
+# copies above; these exist so the documented build command works verbatim.
+bao1x = ["utralib/bao1x"]
+board-baosec = []
+oem-baosec-lite = []
+
+[profile.release]
+codegen-units = 1
+debug = false
+opt-level = "s"

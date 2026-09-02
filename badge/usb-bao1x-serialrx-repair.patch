@@ -1,0 +1,418 @@
+--- a/services/usb-bao1x/src/hw.rs
++++ b/services/usb-bao1x/src/hw.rs
+@@ -2,7 +2,7 @@
+ use std::cell::RefCell;
+ use std::collections::VecDeque;
+ use std::sync::atomic::{AtomicBool, compiler_fence};
+-use std::sync::atomic::{AtomicPtr, Ordering};
++use std::sync::atomic::{AtomicPtr, AtomicUsize, Ordering};
+ 
+ use bao1x_hal::usb::driver::*;
+ use bao1x_hal::usb::utra::*;
+@@ -28,6 +28,143 @@
+ /// Maximum packet size for serial - tied to the speed of the port (HS)
+ pub const SERIAL_MAX_PACKET_SIZE: usize = 512;
+ 
++// --- local repair (not upstream) ---
++/// Packets copied out of the IRQ's scratch buffer, with their lengths.
++///
++/// # Why this exists
++///
++/// The receive path used to leave each packet in the single shared
++/// `Bao1xUsb::serial_rx` and tell the main loop only how many bytes had
++/// arrived. `claim_interrupt` gives the handler the same `Box<Bao1xUsb>` the
++/// main loop holds, so those are the same 512 bytes: a packet arriving before
++/// the main loop drained the previous notification overwrote data that had
++/// already been counted, and the older count was then satisfied from the newer
++/// bytes. The symptom is byte totals that are exactly right with contents that
++/// are wrong -- which is invisible to any test whose payload is a single
++/// repeated byte, and that is precisely why it survived so long here.
++///
++/// Copying at IRQ time is the fix: the bytes and their length travel together
++/// and nothing can overwrite a packet that has already been accounted for.
++///
++/// # Depth
++///
++/// [`SERIAL_RX_SLOTS`] = 64, i.e. 32 KiB. **Was 16, and 16 was measured too
++/// small on hardware** (2026-09-01: `serial rx ring overflowed: 2` then `4`).
++/// The arithmetic that produced 16 counted the wrong thing.
++///
++/// One 4109-byte page frame is `ceil(4109 / 512)` = **9** packets. The old
++/// number stopped there, on the grounds that the client's exchange is
++/// synchronous -- one *request* outstanding, therefore one response in flight.
++/// That is true of requests and false of packets on the wire, because the
++/// client **retries**: `usbhost::RETRY_BUDGET` is 3, so an exchange may send
++/// the same request up to **4** times, and a re-send whose predecessor was
++/// merely late (not lost) has the host answering both. The worst case this ring
++/// must survive is therefore a full retry storm:
++///
++/// ```text
++///   (RETRY_BUDGET + 1) attempts x 9 packets per reply  =  36 packets
++/// ```
++///
++/// 64 is the next power of two above 36 -- 78% headroom, the same margin the
++/// old figure claimed against the wrong denominator -- and a power of two keeps
++/// the head/tail arithmetic cheap in an interrupt handler.
++///
++/// **Assumptions, stated so they can be checked against a transcript.** (1) The
++/// host paces at 512 B/ms, so 36 packets is ~36 ms of wire time and the ring
++/// has to cover any main-loop stall shorter than that; the flush watchdog
++/// (`FLUSH_MS` = 5) is what bounds such a stall, so this is ~7x the watchdog
++/// period. (2) `ConIn` keystroke frames and mirrored log text share the stream
++/// and are single packets; a handful of them fits in the remaining 28 slots.
++/// (3) Nothing pipelines page requests. If that last one ever changes, this
++/// number is `(in-flight requests) x 9 x (RETRY_BUDGET + 1)` and wants
++/// recomputing rather than doubling.
++///
++/// The USB server's own 128-slot message queue is *not* the bound here, and the
++/// old comment saying so had it backwards: the queue filling is precisely the
++/// condition under which the ring has to hold, because a wake-up posted with
++/// `try_send_message(..).ok()` is dropped when the queue is full. The ring is
++/// the thing that makes that lossless, so sizing it *below* the queue defeats
++/// its purpose.
++///
++/// # Why the slots are on the heap
++///
++/// `main.rs` constructs this as `Box::new(Bao1xUsb::new(..))`, which builds the
++/// struct in the caller's frame and then moves it. Rust guarantees no placement
++/// construction, so an inline `[[u8; 512]; 64]` would put 32 KiB on the main
++/// thread's stack at startup on the chance the move is not elided. A boxed
++/// slice costs one indirection on a path that is already a `memcpy`, and makes
++/// the depth a number that can be raised without a stack-overflow argument.
++///
++/// # Overflow
++///
++/// Counted in [`SerialRxRing::overflows`], never silent. An interrupt handler
++/// is the wrong place to log, so it only bumps the counter; the main loop
++/// reports the change -- from the `SerialFlush` watchdog and **not** from the
++/// receive handler, see the report site in `main.rs` for why that distinction
++/// cost a hardware run. A non-zero count means the main loop is not draining
++/// fast enough and packets were dropped -- which is data loss, and the
++/// transport above will see it as a dropped frame and retry.
++pub const SERIAL_RX_SLOTS: usize = 64;
++
++pub struct SerialRxRing {
++    /// Boxed, not inline: see "Why the slots are on the heap" above.
++    slots: Box<[[u8; SERIAL_MAX_PACKET_SIZE]]>,
++    lens: Box<[usize]>,
++    /// Next slot the IRQ will write. Only the IRQ advances it.
++    head: AtomicUsize,
++    /// Next slot the main loop will read. Only the main loop advances it.
++    tail: AtomicUsize,
++    /// Packets dropped because the ring was full.
++    pub overflows: AtomicUsize,
++}
++
++impl SerialRxRing {
++    /// Allocates the ring. Called once, from `Bao1xUsb::new`, before
++    /// `claim_interrupt` -- so the IRQ can never observe a half-built ring.
++    pub fn new() -> Self {
++        Self {
++            slots: vec![[0u8; SERIAL_MAX_PACKET_SIZE]; SERIAL_RX_SLOTS].into_boxed_slice(),
++            lens: vec![0usize; SERIAL_RX_SLOTS].into_boxed_slice(),
++            head: AtomicUsize::new(0),
++            tail: AtomicUsize::new(0),
++            overflows: AtomicUsize::new(0),
++        }
++    }
++
++    /// Copies one packet in. **IRQ context only.**
++    ///
++    /// The store of `head` is `Release` and last, so the bytes and the length
++    /// are already visible to the main loop when the new head is.
++    pub fn push(&mut self, data: &[u8]) {
++        let head = self.head.load(Ordering::Relaxed);
++        let tail = self.tail.load(Ordering::Acquire);
++        let next = (head + 1) % SERIAL_RX_SLOTS;
++        if next == tail {
++            // Full. Drop the packet rather than overwrite one the main loop has
++            // not read -- overwriting is the bug this ring exists to fix.
++            self.overflows.fetch_add(1, Ordering::Relaxed);
++            return;
++        }
++        let n = data.len().min(SERIAL_MAX_PACKET_SIZE);
++        self.slots[head][..n].copy_from_slice(&data[..n]);
++        self.lens[head] = n;
++        self.head.store(next, Ordering::Release);
++    }
++
++    /// Takes the next packet out, or `None` when empty. **Main loop only.**
++    pub fn pop(&mut self, out: &mut [u8; SERIAL_MAX_PACKET_SIZE]) -> Option<usize> {
++        let tail = self.tail.load(Ordering::Relaxed);
++        if tail == self.head.load(Ordering::Acquire) {
++            return None;
++        }
++        let n = self.lens[tail];
++        out[..n].copy_from_slice(&self.slots[tail][..n]);
++        self.tail.store((tail + 1) % SERIAL_RX_SLOTS, Ordering::Release);
++        Some(n)
++    }
++}
++// --- end local repair ---
++
+ #[repr(align(32))]
+ pub struct Bao1xUsb<'a> {
+     pub conn: xous::CID,
+@@ -49,9 +186,29 @@
+     // storage for hid_packets to expatriate from the interrupt handler
+     pub hid_packet: VecDeque<[u8; 64]>,
+     pub serial_port: SerialPort<'a, CorigineWrapper, [u8; 1024], [u8; 1024]>,
+-    // holds one HS packet - must be statically allocated in IRQ handler. Valid length is
+-    // passed as part of the interrupt recovery message.
++    // holds one HS packet - must be statically allocated in IRQ handler.
++    //
++    // --- local repair (not upstream) ---
++    // This buffer used to be the *only* place a received packet lived: the IRQ
++    // read into it and posted a scalar carrying only the byte count, and the
++    // main loop copied `&cu.serial_rx[..valid_bytes]` out of it later. Since
++    // `claim_interrupt` hands the handler the same `Box<Bao1xUsb>` the main
++    // loop holds, those are the same bytes, so a packet arriving before the
++    // main loop drained the previous notification overwrote data that had
++    // already been accounted for. The older count was then satisfied from the
++    // newer bytes: correct totals, wrong contents. Worse, the notification is
++    // sent with `try_send_message(..).ok()`, so when the server queue is full
++    // the message is discarded *after* the overwrite and the bytes are gone.
++    //
++    // It is still used as the scratch `serial.read()` reads into, but the IRQ
++    // now copies out of it into `serial_rx_ring` before returning, so the bytes
++    // and their length travel together. See `SerialRxRing`.
++    // --- end local repair ---
+     pub serial_rx: [u8; SERIAL_MAX_PACKET_SIZE],
++    // --- local repair (not upstream) ---
++    /// Packets copied out of `serial_rx` at IRQ time, with their lengths.
++    pub serial_rx_ring: SerialRxRing,
++    // --- end local repair ---
+     // an error reporter for the double lock condition, which we need to figure out how to handle still.
+     // used for debugging, the idea is to query this in userspace to try and pick up the double-lock problem
+     // from the interrupt handler.
+@@ -121,6 +278,7 @@
+             hid_packet: VecDeque::with_capacity(4),
+             serial_port,
+             serial_rx: [0u8; SERIAL_MAX_PACKET_SIZE],
++            serial_rx_ring: SerialRxRing::new(),
+             double_lock: AtomicBool::new(false),
+             led_state: KeyboardLedsReport::default(),
+             irq_serviced: AtomicBool::new(false),
+@@ -187,7 +345,17 @@
+             .into_boxed_slice();
+         for ready in self.wrapper.ep_out_ready.iter() {
+             ready.store(false, Ordering::SeqCst);
++        }
++        // --- local repair (not upstream) ---
++        // A reset abandons every queued transfer, so nothing is in flight and no
++        // completion event is coming for what was. See `CorigineWrapper::ep_in_busy`.
++        for busy in self.wrapper.ep_in_busy.iter() {
++            busy.store(false, Ordering::SeqCst);
+         }
++        for refusals in self.wrapper.ep_in_refusals.iter() {
++            refusals.store(0, Ordering::SeqCst);
++        }
++        // --- end local repair ---
+ 
+         // re-enable IRQs
+         self.irq_csr.wo(utra::irqarray1::EV_PENDING, 0xFFFF_FFFF);
+@@ -330,13 +498,88 @@
+                 let class = usb.class.borrow_mut();
+                 let serial = usb.serial_port.borrow_mut();
+                 if device.poll(&mut [class, serial as &mut dyn UsbClass<_>]) {
+-                    if let Ok(count) = serial.read(&mut usb.serial_rx) {
+-                        xous::try_send_message(
+-                            usb.conn,
+-                            Message::new_scalar(Opcode::IrqSerialRx.to_usize().unwrap(), count, 0, 0, 0),
+-                        )
+-                        .ok();
++                    // --- local repair (not upstream) ---
++                    // Copy the packet out of the shared scratch buffer HERE,
++                    // synchronously with the read, so the bytes cannot be
++                    // overwritten by the next packet before the main loop gets
++                    // to them. The scalar is now only a wake-up: the length
++                    // travels with the data in the ring, so a notification lost
++                    // to `.ok()` on a full server queue costs latency rather
++                    // than the packet -- the next notification drains both, and
++                    // the flush watchdog bounds the case where there is no next
++                    // packet.
++                    //
++                    // **Drain the endpoint, do not take one packet and leave.**
++                    // `SerialPort::read` moves at most one packet out of the
++                    // hardware per call, and one interrupt can cover several
++                    // arrivals -- a 4109-byte reply is nine packets and they do
++                    // not get nine separate interrupts. Taking one and
++                    // returning left the rest sitting in the endpoint until
++                    // some later event happened to poke it, so a delivery
++                    // carried its first packet and then whatever the listener
++                    // was served next. That is the residual "first 512 bytes
++                    // are right, the tail is not".
++                    //
++                    // Bounded by the ring's own capacity so an interrupt cannot
++                    // run unboundedly: once the ring is full there is nowhere
++                    // to put more anyway, and `push` counts the overflow.
++                    //
++                    // **Measured: this loop takes one packet per interrupt and
++                    // no more, and that is all there is to take.** The run that
++                    // introduced it was byte-identical to the run before it.
++                    // The reason is structural, and it is worth writing down
++                    // because the obvious next guess -- put `device.poll()`
++                    // inside this loop, on the theory that `poll()` is what
++                    // moves data out of the endpoint -- is a *guaranteed*
++                    // no-op on this bus:
++                    //
++                    //   * `SerialPort::read` calls `read_packet` ->
++                    //     `Endpoint::read` -> `CorigineWrapper::read`, so
++                    //     `read()` is already the call that touches hardware:
++                    //     it copies out of the app buffer and re-arms the OUT
++                    //     transfer (`driver.rs`, `fn read`).
++                    //   * `CorigineWrapper::poll` is
++                    //     `self.core().event_inner.take()` -- a cached event
++                    //     set by `handle_event_inner`, no hardware access at
++                    //     all. A second poll in the same interrupt returns
++                    //     `None`, `UsbDevice::poll` returns false, and nothing
++                    //     happens.
++                    //   * The OUT endpoint carries **one** TRB at a time, into
++                    //     one 512-byte buffer, re-armed only from inside
++                    //     `read()`. One completion event is therefore one
++                    //     packet, and the enclosing event-ring loop already
++                    //     polls once per event.
++                    //
++                    // The loop is kept because it costs one extra `read()` per
++                    // interrupt and becomes load-bearing the moment the OUT
++                    // side is given a deeper ring, which is the actual fix for
++                    // the host-side pacing this link still needs.
++                    let mut drained = 0usize;
++                    while drained < crate::hw::SERIAL_RX_SLOTS {
++                        match serial.read(&mut usb.serial_rx) {
++                            Ok(count) if count > 0 => {
++                                usb.serial_rx_ring.push(&usb.serial_rx[..count]);
++                                drained += 1;
++                                xous::try_send_message(
++                                    usb.conn,
++                                    Message::new_scalar(
++                                        Opcode::IrqSerialRx.to_usize().unwrap(),
++                                        count,
++                                        0,
++                                        0,
++                                        0,
++                                    ),
++                                )
++                                .ok();
++                            }
++                            // `Ok(0)` cannot happen -- `read` reports
++                            // `WouldBlock` rather than an empty read -- but
++                            // treating it as "nothing left" costs nothing and
++                            // makes the loop's termination obvious.
++                            _ => break,
++                        }
+                     }
++                    // --- end local repair ---
+                     match class.device::<NKROBootKeyboard<_>, _>().read_report() {
+                         Ok(l) => {
+                             usb.led_state = l;
+--- a/services/usb-bao1x/src/main.rs
++++ b/services/usb-bao1x/src/main.rs
+@@ -152,6 +152,14 @@
+     let mut serial_listener: Option<xous::MessageEnvelope> = None;
+     let mut serial_listen_mode: SerialListenMode = SerialListenMode::NoListener;
+     let mut serial_buf = Vec::<u8>::new();
++    // --- local repair (not upstream) ---
++    // Last reported value of the receive ring's overflow counter, so a change
++    // is logged once rather than repeatedly. Read and reported on
++    // `Opcode::SerialFlush` -- never on `Opcode::IrqSerialRx`, which is the
++    // per-packet path; the reason that distinction matters is written at the
++    // report site. See `SerialRxRing`.
++    let mut last_rx_overflows = 0usize;
++    // --- end local repair ---
+     let mut serial_rx_trigger = false; // when true, the condition was met to pass data to the listener (but the listener was not yet installed)
+ 
+     // under the theory that PIDs cannot be forged.
+@@ -590,9 +598,33 @@
+                 }
+             }),
+             Opcode::IrqSerialRx => {
+-                if let Some(scalar) = msg.body.scalar_message() {
+-                    let valid_bytes = scalar.arg1;
+-                    serial_buf.extend_from_slice(&cu.serial_rx[..valid_bytes]);
++                if msg.body.scalar_message().is_some() {
++                    // --- local repair (not upstream) ---
++                    // Drain the ring the IRQ copied into, rather than re-reading
++                    // the shared `serial_rx` scratch buffer with a length that
++                    // arrived separately. The scalar's `arg1` is now only a
++                    // hint; the authoritative length travels with its own bytes.
++                    //
++                    // Drains everything available, not one packet, so a
++                    // notification lost to a full server queue costs latency
++                    // instead of data: the next one picks up both.
++                    //
++                    // **Nothing logs here.** The overflow report lives on
++                    // `SerialFlush` instead; see the report site there. In one
++                    // sentence: `log::*` is a *blocking* lend to the log
++                    // server, this handler runs once per received packet, and
++                    // it runs hottest exactly when the queue is full -- which
++                    // is the condition that turned the report into a deadlock
++                    // on 2026-09-01. Even with that deadlock fixed at its root
++                    // (`badge/xous-log-usb-mirror-nonblocking.patch`), a
++                    // round trip to the log server per packet is a hundred
++                    // microseconds spent by the loop whose falling behind is
++                    // what the message is complaining about.
++                    let mut pkt = [0u8; crate::hw::SERIAL_MAX_PACKET_SIZE];
++                    while let Some(n) = cu.serial_rx_ring.pop(&mut pkt) {
++                        serial_buf.extend_from_slice(&pkt[..n]);
++                    }
++                    // --- end local repair ---
+                     match serial_listen_mode {
+                         SerialListenMode::NoListener => {
+                             match std::str::from_utf8(&serial_buf) {
+@@ -740,7 +772,55 @@
+                     // The interrupt handler may access the same usbd-serial state through
+                     // UsbDevice::poll(), so the flush must use the IRQ-safe wrapper.
+                     cu.serial_flush_irq_safe().ok();
++                }
++                // --- local repair (not upstream) ---
++                // Drain the receive ring here as well, not only on `IrqSerialRx`.
++                //
++                // The IRQ posts its wake-up with `try_send_message(..).ok()`, so a full
++                // server queue silently discards it. The ring is what makes that safe --
++                // the bytes are still there -- but only if something eventually comes to
++                // collect them, and the *next* notification is not guaranteed to exist:
++                // the host is waiting on a reply and will not send more. The watchdog is
++                // the only periodic event this service has, which makes it the natural
++                // place to bound that wait, and it already exists for the mirror-image
++                // problem on the listener side.
++                {
++                    let mut pkt = [0u8; crate::hw::SERIAL_MAX_PACKET_SIZE];
++                    while let Some(n) = cu.serial_rx_ring.pop(&mut pkt) {
++                        serial_buf.extend_from_slice(&pkt[..n]);
++                    }
+                 }
++                // And the overflow report, here rather than in `IrqSerialRx`.
++                //
++                // `log::error!` is `xous::send_message(.., new_lend(..))` -- a
++                // **blocking** borrow of the log server -- and `IrqSerialRx` is the
++                // per-packet handler. Reporting from there put a blocking IPC on the
++                // receive hot path at the exact moment the queue was full, which on
++                // 2026-09-01 deadlocked the badge: log server parked in
++                // `retry_syscall` trying to mirror the line back into this service's
++                // full queue, this service parked waiting for the log server, and the
++                // emulator parked forever inside `SerialSendDataBlocking` with no
++                // deadline able to fire. The root cause is repaired in
++                // `badge/xous-log-usb-mirror-nonblocking.patch`; this is the second
++                // half, and it is worth having on its own merits.
++                //
++                // `SerialFlush` is the right site: it is this service's only periodic
++                // event, it runs at `FLUSH_MS` (5 ms) rather than per packet, and the
++                // information is a counter -- nothing about it needs to be delivered
++                // any sooner than the next watchdog tick. The count itself is still
++                // exact; only the report is rate-limited.
++                {
++                    let dropped = cu.serial_rx_ring.overflows.load(Ordering::Relaxed);
++                    if dropped != last_rx_overflows {
++                        last_rx_overflows = dropped;
++                        log::error!(
++                            "serial rx ring overflowed: {} packet(s) dropped in total -- the \
++                             main loop is not draining fast enough and receive data was lost",
++                            dropped
++                        );
++                    }
++                }
++                // --- end local repair ---
+                 // this tries to return any data that's pending within the main loop's buffers
+                 match serial_listen_mode {
+                     SerialListenMode::BinaryListener => {

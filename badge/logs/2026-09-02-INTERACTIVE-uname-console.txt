@@ -1,0 +1,224 @@
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acim
+[    0.000000] riscv: ELF capabilities acim
+ffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000035] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acim
+[    0.000000] riscv: ELF capabilities acim
+[    0.000000] Kernel command line: console=ttyS0 earlycon=sbi rdinit=/init
+[    0.000000] Dentry cache hash table entries: 4096 (order: 3, 32768 bytes, lin[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] clocksource: jiffies: mask: 0xff[    0.066258] Memory: 27564K/32768K available (1389K kernel code, 624K rwdata, 517K rodata, 206K init, 303K bss, 4488K reserved, 0K cma-reserved)
+[    0.075808] devtmpfs: initialized
+[    0.124426] futex hash table entries: 256 (order: 1, 6144 bytes, linear)
+[    0.129664] DMI not present or invalid.
+[    0.198503] cpu0: Ratio of byte access time to unaligned word access is 7.96, unaligned accesses are fast
+[    0.266979] clocksource: Switched to clocksource riscv_clocksource
+[    0.356786] Unpacking initramfs...
+[    0.425678] workingset: timestamp_bits=62 max_order=13 bucket_order=0
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acim
+[    0.000000] riscv: ELF capabilities acim
+[    0.000000] Kernel command line: console=ttyS0 earlycon=sbi rdinit=/init
+[    0.000000] Dentry cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 8192
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.066258] Memory: 27564K/32768K available (1389K kernel code, 624K rwdata, 517K rodata, 206K init, 303K bss, 4488K reserved, 0K cma-reserved)
+[    0.124426] futex hash table entries: 256 (order: 1, 6144 bytes, linear)
+[    0.129664] DMI not present or invalid.
+[    0.198503] cpu0: Ratio of byte access time to unaligned word access is 7.96, unaligned accesses are fast
+[    0.266979] clocksource: Switched to clocksource riscv_clocksource
+[    0.356786] Unpacking initramfs...
+[    0.000000] Kernel command line: console=ttyS0 earlycon=sbi rdinit=/init
+[    0.000000] Dentry cache hash table entries: 4096 (order: 3, 32768 bytes, lin[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] clocksource: jiffies: mask: 0xff[    0.005469] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=100000)
+[    0.007491] pid_max: default: 32768 minimum: 301
+[    0.011767] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.013759] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.058100] ASID allocator disabled (0 bits)
+[    0.064210] EFI services will not be available.
+[    0.075808] devtmpfs: initialized
+[    0.138782] cpuidle: using governor menu
+[    0.266979] clocksource: Switched to clocksource riscv_clocksource
+[    0.356786] Unpacking initramfs...
+[    0.000000] Linux version 6.12.103 (nixbld@localhost) (riscv64-unknown-linux-gnu-gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS Sun Aug  9 18:23:28 UTC 2026
+[    0.000000] random: crng init done
+[    0.000000] Machine model: baochip rv64 emulator
+[    0.000000] SBI specification v0.2 detected
+[    0.000000] SBI implementation ID=0x1 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acim
+[    0.000000] riscv: ELF capabilities acim
+[    0.000000] Kernel command line: console=ttyS0 earlycon=sbi rdinit=/init
+[    0.000000] Dentry cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 8192
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000035] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.005469] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=100000)
+[    0.007491] pid_max: default: 32768 minimum: 301
+[    0.011767] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.013759] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.058100] ASID allocator disabled (0 bits)
+[    0.064210] EFI services will not be available.
+[    0.066258] Memory: 27564K/32768K available (1389K kernel code, 624K rwdata, 517K rodata, 206K init, 303K bss, 4488K reserved, 0K cma-reserved)
+[    0.075808] devtmpfs: initialized
+[    0.124426] futex hash table entries: 256 (order: 1, 6144 bytes, linear)
+[    0.129664] DMI not present or invalid.
+[    0.138782] cpuidle: using governor menu
+[    0.198503] cpu0: Ratio of byte access time to unaligned word access is 7.96, unaligned accesses are fast
+[    0.266979] clocksource: Switched to clocksource riscv_clocksource
+[    0.356786] Unpacking initramfs...
+[    0.425678] workingset: timestamp_bits=62 max_order=13 bucket_order=0
+
+MEM FAULT 0x805ea000 reading page 1514: response for page 1513 while waiting for page 1514 [reader: parked=false stopped=false lend_errs=0 unparks=1 primed=true rx_bytes=3993948 not_sync=6775 first_delivery=[c1 b0 02 04 10 00 02 00 00 4d 5a 6f 10 20 08 01] | tx: last 13 B asked / 13 accepted in 1 call(s), 0 refused, 0 short, 0 flush(es), 1 ms | life 990 frames (1 multi-packet), 15983 bytes accepted, 0 refusals | addrs: base=0x60049000 pagelen=4096 used=520 (expected 520 for veclen) arch=size8/align4 root=0x60049200 root_align=0 reloff=-512 resolved=0x60049000 veclen=512 | head@base=[c1 b0 02 04 10 00 02 00 00 4d 5a 6f 10 20 08 01 00 00 00 20 00 00 00 00 00 00 b0 2f 00 00 00 00] +512=[] +1024=[] pkt_repeat=n/a rootbytes=[00 fe ff ff 00 02 00 00] | text=0x000b2dc6 heap=0x20407630 stack=0x60044ed3]
+[    0.000000] Linux version 6.12.103 (nixbld@localhost) (riscv64-unknown-linux-gnu-gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS Sun Aug  9 18:23:28 UTC 2026
+[    0.000000] random: crng init done
+[    0.000000] Machine model: baochip rv64 emulator
+[    0.000000] SBI specification v0.2 detected
+[    0.000000] SBI implementation ID=0x1 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acim
+[    0.000000] riscv: ELF capabilities acim
+[    0.000000] Kernel command line: console=ttyS0 earlycon=sbi rdinit=/init
+[    0.000000] Dentry cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 8192
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000035] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.005469] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=100000)
+[    0.007491] pid_max: default: 32768 minimum: 301
+[    0.011767] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.013759] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.058100] ASID allocator disabled (0 bits)
+[    0.064210] EFI services will not be available.
+[    0.066258] Memory: 27564K/32768K available (1389K kernel code, 624K rwdata, 517K rodata, 206K init, 303K bss, 4488K reserved, 0K cma-reserved)
+[    0.075808] devtmpfs: initialized
+[    0.124426] futex hash table entries: 256 (order: 1, 6144 bytes, linear)
+[    0.129664] DMI not present or invalid.
+[    0.138782] cpuidle: using governor menu
+[    0.198503] cpu0: Ratio of byte access time to unaligned word access is 7.96, unaligned accesses are fast
+[    0.266979] clocksource: Switched to clocksource riscv_clocksource
+[    0.356786] Unpacking initramfs...
+[    0.425678] workingset: timestamp_bits=62 max_order=13 bucket_order=0
+[    0.000000] Linux version 6.12.103 (nixbld@localhost) (riscv64-unknown-linux-gnu-gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS Sun Aug  9 18:23:28 UTC 2026
+[    0.000000] random: crng init done
+[    0.000000] Machine model: baochip rv64 emulator
+[    0.000000] SBI specification v0.2 detected
+[    0.000000] SBI implementation ID=0x1 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Falling back to deprecated "riscv,isa"
+[    0.000000] riscv: base ISA extensions acim
+[    0.000000] riscv: ELF capabilities acim
+[    0.000000] Kernel command line: console=ttyS0 earlycon=sbi rdinit=/init
+[    0.000000] Dentry cache hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 8192
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:off, heap free:off
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=1, Nodes=1
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] riscv-intc: 64 local interrupts mapped
+[    0.000000] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604462750000 ns
+[    0.000000] clocksource: riscv_clocksource: mask: 0xffffffffffffffff max_cycles: 0x24e6a1710, max_idle_ns: 440795202120 ns
+[    0.000035] sched_clock: 64 bits at 10MHz, resolution 100ns, wraps every 4398046511100ns
+[    0.005469] Calibrating delay loop (skipped), value calculated using timer frequency.. 20.00 BogoMIPS (lpj=100000)
+[    0.007491] pid_max: default: 32768 minimum: 301
+[    0.011767] Mount-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.013759] Mountpoint-cache hash table entries: 512 (order: 0, 4096 bytes, linear)
+[    0.058100] ASID allocator disabled (0 bits)
+[    0.064210] EFI services will not be available.
+[    0.066258] Memory: 27564K/32768K available (1389K kernel code, 624K rwdata, 517K rodata, 206K init, 303K bss, 4488K reserved, 0K cma-reserved)
+[    0.075808] devtmpfs: initialized
+[    0.124426] futex hash table entries: 256 (order: 1, 6144 bytes, linear)
+[    0.129664] DMI not present or invalid.
+[    0.138782] cpuidle: using governor menu
+[    0.198503] cpu0: Ratio of byte access time to unaligned word access is 7.96, unaligned accesses are fast
+[    0.266979] clocksource: Switched to clocksource riscv_clocksource
+[    0.356786] Unpacking initramfs...
+[    0.425678] workingset: timestamp_bits=62 max_order=13 bucket_order=0
+[   15.914314] Freeing initrd memory: 880K
+[   15.919923] Serial: 8250/16550 driver, 1 ports, IRQ sharing disabled
+[   15.951072] of_serial 10000000.serial: error -ENXIO: IRQ index 0 not found
+[   15.960047] printk: legacy console [ttyS0] disabled
+[   15.983151] 10000000.serial: ttyS0 at MMIO 0x10000000 (irq = 0, base_baud = 230400) is a 16550A
+[   15.985724] printk: legacy console [ttyS0] enabled
+[   15.985724] printk: legacy console [ttyS0] enabled
+[   15.988398] printk: legacy bootconsole [sbi0] disabled
+[   15.988398] printk: legacy bootconsole [sbi0] disabled
+[   16.008401] suspend: HSM suspend not available
+[   16.342733] debug_vm_pgtable: [debug_vm_pgtable         ]: Validating architecture page table helpers
+[   16.349933] clk: Disabling unused clocks
+[   16.358601] Freeing unused kernel image (initmem) memory: 204K
+[   16.359864] Kernel memory protection not selected by kernel config.
+[   16.361207] Run /init as init process
+
+riscv64 Linux
+6.12.103
+baochip rv64 emu
+
+/nix/store:
+6bcwi3dcynnbc2m5d8jq4vp7wblzjvcb
+  busybox-static
+/bin/sh: can't access tty; job control turned off
+~ # uname -r
+6.12.103
+~ # 

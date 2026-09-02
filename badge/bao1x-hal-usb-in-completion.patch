@@ -1,0 +1,200 @@
+--- a/libs/bao1x-hal/src/usb/driver.rs
++++ b/libs/bao1x-hal/src/usb/driver.rs
+@@ -2,6 +2,8 @@
+ use core::mem::size_of;
+ #[cfg(feature = "std")]
+ use core::sync::atomic::AtomicBool;
++#[cfg(feature = "std")]
++use core::sync::atomic::AtomicUsize;
+ use core::sync::atomic::{AtomicPtr, Ordering, compiler_fence};
+ #[cfg(feature = "std")]
+ use std::sync::{Arc, Mutex};
+@@ -2289,12 +2291,55 @@
+     pub fn xous_resume2(&self) {}
+ }
+ 
++// --- local repair (not upstream) ---
++/// Consecutive `WouldBlock` refusals a bulk IN endpoint may accumulate before
++/// [`CorigineWrapper::write`] stops believing its own bookkeeping and enqueues
++/// anyway.
++///
++/// The completion check below is only as good as the transfer-completion event
++/// that clears it. This driver's own comment in `get_app_buf_ptr` says
++/// "for some reason, we aren't getting all the interrupts we expect to be
++/// getting", so an event that never arrives is a documented possibility, and a
++/// completion check with no escape would turn a corrupting bug into a hanging
++/// one -- strictly worse, because a hang leaves no next frame to diagnose it
++/// with.
++///
++/// After this many refusals the endpoint reverts to the pre-repair behaviour
++/// for exactly one packet, so the worst case of this repair is the behaviour it
++/// replaces rather than a wedge. Refusals are counted per endpoint and reset on
++/// every observed completion, so this counts *consecutive* failures; ordinary
++/// back-pressure is one or two.
+ #[cfg(feature = "std")]
++pub const IN_REFUSAL_LIMIT: usize = 64;
++// --- end local repair ---
++
++#[cfg(feature = "std")]
+ pub struct CorigineWrapper {
+     pub hw: Arc<Mutex<CorigineUsb>>,
+     /// Tuple is (type of endpoint, max packet size)
+     pub ep_meta: [Option<(EpType, usize)>; CRG_EP_NUM],
+     pub ep_out_ready: Box<[Arc<AtomicBool>]>,
++    // --- local repair (not upstream) ---
++    /// Per-endpoint "a bulk IN transfer has been enqueued whose completion
++    /// event has not been observed yet".
++    ///
++    /// `write()` copies every IN packet into **one** 512-byte hardware buffer
++    /// -- `get_app_buf_ptr` computes `new_index = enq + mps` and resets `enq`
++    /// to 0 whenever `new_index + mps > CRG_UDC_APP_BUF_LEN`, and with
++    /// `mps == CRG_UDC_APP_BUF_LEN == 512` that is *every* call -- and then
++    /// enqueued a transfer pointing at it with no check that the previous
++    /// transfer had finished reading it. Two packets handed over back to back
++    /// therefore put the second one on the wire twice.
++    ///
++    /// Nothing above this could compensate: `usbd-serial`'s `flush` emits one
++    /// packet per call and propagates `WouldBlock` correctly, and its
++    /// `endpoint_in_complete` calls `flush` again -- so the class is already a
++    /// completion-driven pipeline, waiting for a bus that would say "not yet".
++    /// This flag is that answer.
++    pub ep_in_busy: Box<[Arc<AtomicBool>]>,
++    /// Consecutive refusals per endpoint; see [`IN_REFUSAL_LIMIT`].
++    pub ep_in_refusals: Box<[Arc<AtomicUsize>]>,
++    // --- end local repair ---
+     pub address_is_set: Arc<AtomicBool>,
+     pub event: Option<CrgEvent>,
+     pub irq_csr: AtomicCsr<u32>,
+@@ -2308,8 +2353,18 @@
+             ep_meta: [None; CRG_EP_NUM],
+             ep_out_ready: (0..CRG_EP_NUM + 1)
+                 .map(|_| Arc::new(AtomicBool::new(false)))
++                .collect::<Vec<_>>()
++                .into_boxed_slice(),
++            // --- local repair (not upstream) ---
++            ep_in_busy: (0..CRG_EP_NUM + 1)
++                .map(|_| Arc::new(AtomicBool::new(false)))
++                .collect::<Vec<_>>()
++                .into_boxed_slice(),
++            ep_in_refusals: (0..CRG_EP_NUM + 1)
++                .map(|_| Arc::new(AtomicUsize::new(0)))
+                 .collect::<Vec<_>>()
+                 .into_boxed_slice(),
++            // --- end local repair ---
+             event: None,
+             address_is_set: Arc::new(AtomicBool::new(false)),
+             irq_csr,
+@@ -2322,6 +2377,13 @@
+             hw: self.hw.clone(),
+             ep_meta: [None; CRG_EP_NUM],
+             ep_out_ready: self.ep_out_ready.clone(),
++            // --- local repair (not upstream) ---
++            // Shared, not copied: a clone views the same endpoints, so it must
++            // see the same in-flight state. (`ep_out_ready` clones the `Arc`s
++            // for the same reason, then redundantly copies their values below.)
++            ep_in_busy: self.ep_in_busy.clone(),
++            ep_in_refusals: self.ep_in_refusals.clone(),
++            // --- end local repair ---
+             event: None,
+             address_is_set: self.address_is_set.clone(),
+             irq_csr: self.irq_csr.clone(),
+@@ -2593,6 +2655,65 @@
+                 &buf[..8.min(buf.len())]
+             );
+             self.disable_interrupts();
++            // --- local repair (not upstream) ---
++            // **Refuse a packet while the previous one is still in flight.**
++            //
++            // Below, `get_app_buf_ptr` hands back the *same* 512-byte address
++            // on every call (see `ep_in_busy`), and the transfer is enqueued
++            // pointing at it. Without this check a second `write` overwrites a
++            // buffer the controller has not finished sending, so a multi-packet
++            // transmission puts its last packet on the wire N times. Everything
++            // this port had ever successfully sent fitted in one packet, which
++            // is why it went unnoticed until the first 4109-byte frame.
++            //
++            // `WouldBlock` is the answer the layers above are already written
++            // for: `usbd-serial`'s `flush` leaves the bytes in its own buffer
++            // and propagates it, and its `endpoint_in_complete` calls `flush`
++            // again when the transfer finishes -- so refusing here converts the
++            // class into the completion-driven pipeline it was always meant to
++            // be, at hardware speed and with no timer anywhere.
++            //
++            // The completion is observed through `app_ptr`, which
++            // `handle_event_inner` sets for *both* directions on a transfer
++            // event, rather than through `poll()`: `poll()` only returns a
++            // cached `event_inner` and depends on the class stack calling it,
++            // while `app_ptr` is written by the event ring itself. `write` was
++            // already taking that slot and discarding it a few lines below;
++            // this reads it first instead of throwing the information away.
++            //
++            // Bulk IN only. The interrupt IN endpoints (HID keyboard, FIDO)
++            // carry one short report at a time and have never shown this
++            // defect, so they keep exactly the behaviour they have today --
++            // the blast radius of a repair that cannot be tested off-badge
++            // should be the endpoint whose failure was measured.
++            let pei_in = CorigineUsb::pei(ep_addr.index() as u8, CRG_IN);
++            let is_bulk_in = matches!(self.ep_meta[pei_in - 2], Some((EpType::BulkInbound, _)));
++            if is_bulk_in && self.ep_in_busy[ep_addr.index()].load(Ordering::SeqCst) {
++                if self.core().app_ptr[pei_in - 2].is_some() {
++                    // The completion event landed: the buffer is ours again.
++                    self.ep_in_busy[ep_addr.index()].store(false, Ordering::SeqCst);
++                    self.ep_in_refusals[ep_addr.index()].store(0, Ordering::SeqCst);
++                } else if self.ep_in_refusals[ep_addr.index()].fetch_add(1, Ordering::SeqCst)
++                    < IN_REFUSAL_LIMIT
++                {
++                    // `disable_interrupts()` was called above, so every return
++                    // path after that point must restore the USB interrupts.
++                    self.enable_interrupts();
++                    return Err(UsbError::WouldBlock);
++                } else {
++                    // See `IN_REFUSAL_LIMIT`: a completion that never arrives
++                    // must not wedge the endpoint, so this one packet reverts
++                    // to the pre-repair behaviour and the count restarts.
++                    crate::println!(
++                        "ep{} IN: no completion after {} refusals; enqueueing anyway",
++                        ep_addr.index(),
++                        IN_REFUSAL_LIMIT
++                    );
++                    self.ep_in_busy[ep_addr.index()].store(false, Ordering::SeqCst);
++                    self.ep_in_refusals[ep_addr.index()].store(0, Ordering::SeqCst);
++                }
++            }
++            // --- end local repair ---
+             let addr = match self.core().get_app_buf_ptr(ep_addr.index() as u8, CRG_IN) {
+                 Some(addr) => addr,
+                 None => {
+@@ -2637,6 +2758,14 @@
+             }
+             #[cfg(feature = "verbose-debug")]
+             crate::println!("ep{} initiated {}", ep_addr.index(), buf.len());
++            // --- local repair (not upstream) ---
++            // The buffer now belongs to the controller until its transfer event
++            // arrives. `app_ptr` was taken above, so "completed" is exactly
++            // "`app_ptr` is `Some` again".
++            if is_bulk_in {
++                self.ep_in_busy[ep_addr.index()].store(true, Ordering::SeqCst);
++            }
++            // --- end local repair ---
+             self.enable_interrupts();
+             Ok(buf.len())
+         }
+@@ -2870,7 +2999,18 @@
+         self.address_is_set.store(false, Ordering::SeqCst);
+         for eor in self.ep_out_ready.iter() {
+             eor.store(false, Ordering::SeqCst);
++        }
++        // --- local repair (not upstream) ---
++        // A reset abandons every queued transfer, so nothing is in flight and
++        // no completion event is coming for what was. Leaving these set would
++        // cost `IN_REFUSAL_LIMIT` refused packets after every re-enumeration.
++        for busy in self.ep_in_busy.iter() {
++            busy.store(false, Ordering::SeqCst);
+         }
++        for refusals in self.ep_in_refusals.iter() {
++            refusals.store(0, Ordering::SeqCst);
++        }
++        // --- end local repair ---
+         crate::println!(" ******** reset");
+         let irq_csr = {
+             let mut hw = self.core();

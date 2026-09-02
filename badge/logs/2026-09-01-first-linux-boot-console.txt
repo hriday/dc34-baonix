@@ -1,0 +1,19 @@
+[    0.000000] Linux version 6.12.103 (nixbld@localhost) (riscv64-unknown-linux-gnu-gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-NixOS Sun Aug  9 18:23:28 UTC 2026
+[    0.000000] random: crng init done
+[    0.000000] Machine model: baochip rv64 emulator
+[    0.000000] SBI specification v0.2 detected
+[    0.000000] SBI implementation ID=0x1 Version=0x1
+[    0.000000] SBI TIME extension detected
+[    0.000000] earlycon: sbi0 at I/O port 0x0 (options '')
+[    0.000000] printk: legacy bootconsole [sbi0] enabled
+[    0.000000] efi: UEFI not found.
+[    0.000000] OF: reserved mem: Reserved memory: No reserved-memory node in the DT
+[    0.000000] Zone ranges:
+[    0.000000]   DMA32    [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000080000000-0x0000000081ffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000080000000-0x0000000081ffffff]
+
+MEM FAULT 0x81fc800c no answer after 4 attempt(s); measured 1009 ms total, 251 ms on the last attempt, 2137 deliveries (1060122 bytes) ever received. Policy: 2000 ms total, 250 ms per attempt, 3 re-sends. Reading: bytes arrived but never formed the frame asked for: framing, CRC, truncation, or an answer for another page [reader: parked=true stopped=false lend_errs=0 unparks=0 primed=true rx_bytes=1060122 not_sync=1971 first_delivery=[c1 b0 02 04 10 00 02 00 00 4d 5a 6f 10 20 08 01] | addrs: base=0x6004c000 pagelen=4096 used=1544 (expected 1544 for veclen) arch=size8/align4 root=0x6004c600 root_align=0 reloff=-1536 resolved=0x6004c000 veclen=1536 | head@base=[c1 b0 02 04 10 00 02 00 00 4d 5a 6f 10 20 08 01 00 00 00 20 00 00 00 00 00 00 b0 2f 00 00 00 00] +512=[00 13 00 00 00 13 00 00 00 13 00 00 00 13 00 00] +1024=[00 13 00 00 00 13 00 00 00 13 00 00 00 13 00 00] pkt_repeat=false rootbytes=[00 fa ff ff 00 06 00 00] | text=0x000b3ac4 heap=0x20105e18 stack=0x60044ecc]

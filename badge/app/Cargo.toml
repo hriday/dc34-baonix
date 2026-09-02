@@ -1,0 +1,162 @@
+[package]
+name = "badge-app"
+version = "0.1.0"
+edition = "2021"
+
+# Standalone workspace on purpose, for the same reason `../probe` is one: this
+# crate builds for riscv32imac-unknown-xous-elf against a custom sysroot, and it
+# must not be pulled into the host workspace at ../../Cargo.toml. Cargo resolves
+# target-specific dependencies for *every* platform when it writes a lock file,
+# so a member entry there would make `cargo test` at the repo root fetch
+# xous-core.
+[workspace]
+
+[lib]
+name = "badge_app"
+path = "src/lib.rs"
+
+# The badge payload. It compiles on a laptop too -- into a binary that prints
+# how to run the dry run and exits -- so `cargo test` and `cargo clippy` cover
+# `src/main.rs`'s non-xous half rather than skipping the file entirely.
+[[bin]]
+name = "rv64-badge"
+path = "src/main.rs"
+
+[dependencies]
+# The emulator core and the wire format, by path. Both are members of the host
+# workspace; a path dependency into another workspace is an ordinary dependency
+# and does not make this crate a member of that workspace.
+rv64 = { path = "../../crates/rv64" }
+rv64-proto = { path = "../../crates/rv64-proto" }
+# `oled` reports its own draw failures through `log::` rather than the serial
+# port, which the transport owns. On the badge these ride the log server's USB
+# mirror alongside panic text; on the laptop they go nowhere, which is why this
+# is an ordinary dependency and not a target-gated one -- the call sites are
+# above the `cfg`, with the rest of the display policy.
+log = "0.4.14"
+
+[dev-dependencies]
+# Tests only, and host-only in practice: `usbhost`'s end-to-end test drives the
+# badge client against `rv64_host::serve::serve_once` -- the *actual* laptop
+# server this link talks to -- rather than against a reimplementation of it, so
+# a wire-format drift between the two ends fails a laptop test instead of a
+# hardware cycle. Nothing outside `#[cfg(test)]` may reach for this: the crate
+# is full of `std::fs`.
+rv64-host = { path = "../../crates/rv64-host" }
+
+# Everything below exists only for `UsbTransport`, which is
+# `#[cfg(target_os = "xous")]`. Gating the dependencies the same way is what
+# lets `cargo test` exercise the whole transport on the laptop without a xous
+# sysroot, while `cargo check --target riscv32imac-unknown-xous-elf` still
+# type-checks the hardware path.
+[target.'cfg(target_os = "xous")'.dependencies]
+xous = "0.9.70"
+# The clock behind `Transport::now_ms`, and the sleeps in the park/poll loops.
+ticktimer = { package = "xous-api-ticktimer", version = "0.9.70" }
+# `main.rs`: `log_server::init_wait()`, and `Opcode::TryHookUsbMirror` -- the
+# panic mirror is hooked by name through this crate rather than as a bare `4`,
+# so a renumbering upstream is a compile error instead of a silent no-op.
+# `../probe/Cargo.toml` declares it for the same call.
+log-server = { package = "xous-api-log", version = "0.1.69" }
+# Not used directly. usb-bao1x pulls bao1x-hal in with only `std` and `axp2101`,
+# which leaves bao1x-hal's own `utralib` dependency optional-and-off -- and
+# bao1x-hal unconditionally does `use utralib::{utra::bio_bdma::*, *}`, so it
+# fails to compile. `board-baosec` is the feature that turns utralib on and
+# selects the bao1x register map. The probe gets this for free from its
+# `xous-swapper` dependency, which this crate has no other use for.
+bao1x-hal = { git = "https://github.com/betrusted-io/xous-core", rev = "9844906ddc1214438d0d942d2db2922846ae4722", features = [
+    "board-baosec",
+] }
+usb-bao1x ={ git = "https://github.com/betrusted-io/xous-core", rev = "9844906ddc1214438d0d942d2db2922846ae4722", features = [
+    "bao1x",
+    "board-baosec",
+    "oem-baosec-lite",
+] }
+# Used only by `capture_addresses()`, to name
+# `<UsbSerialBinary as rkyv::Archive>::Archived` so its size and alignment are
+# *computed* rather than assumed -- the whole point of that diagnostic is that
+# it must not encode my guess about the layout. Declared with exactly the
+# features `xous-ipc` declares (`default-features = false`, `std`, `alloc`) so
+# feature unification is unchanged and it resolves nothing new; rkyv 0.8.18 is
+# already in `Cargo.lock` transitively.
+#
+# The version matters beyond that: rkyv's `pointer_width_*` features are
+# additive and cargo unifies them per dependency graph. This app and the flashed
+# `xous.uf2` are resolved in different workspaces, so they could in principle
+# disagree about whether `ArchivedUsize` is 4 or 8 bytes -- which would change
+# `size_of::<ArchivedVec<u8>>()` and therefore where `access_unchecked` looks
+# for the archive root. Printing the size from the badge settles that.
+rkyv = { version = "0.8.8", default-features = false, features = ["std", "alloc"] }
+# Both are used directly by `wait_binary()`, which inlines the three lines of
+# `usb_bao1x::UsbHid::serial_wait_binary()` so the real `xous::Error` from
+# `lend_mut` survives instead of being flattened to `InternalError` and
+# `.expect()`ed. See `../probe/src/main.rs`'s `wait_binary` for the autopsy.
+xous-ipc = "0.10.10"
+num-traits = { version = "0.2.14", default-features = false }
+# Not used directly. rand_core pulls it in via bao1x-hal-service and aes, and
+# stock getrandom 0.2.x has no riscv32-xous backend -- it hard `compile_error!`s.
+# xous-core carries a forked 0.2.12 with one; pin + patch exactly as
+# ../probe/Cargo.toml and services/dc34-console/Cargo.toml do.
+getrandom = "=0.2.12"
+# `oled::GfxScreen` uses this directly for `Gfx`, `TextView` and `minigfx`.
+# It was already here before that, and for a reason worth keeping: bao1x-hal
+# pulls ux-api in with default features *off*, which leaves ActionType
+# variantless (enum_dispatch then fails to compile) and leaves blitstr2's font
+# tables cfg'd out on a xous target. Declaring it here with defaults on plus
+# `bao1x` fixes both. `services/dc34-console/Cargo.toml` does the same.
+ux-api = { git = "https://github.com/betrusted-io/xous-core", rev = "9844906ddc1214438d0d942d2db2922846ae4722", features = [
+    "board-baosec",
+    "bao1x",
+] }
+# `GlyphStyle` lives here, not in ux-api, and ux-api does not re-export it --
+# `apps-baosec/dc34-vault/src/ux.rs:7` imports it from blitstr2 the same way.
+# The board features must match ux-api's or the font tables compile away.
+blitstr2 = { git = "https://github.com/betrusted-io/xous-core", rev = "9844906ddc1214438d0d942d2db2922846ae4722", features = [
+    "board-baosec",
+    "bao1x",
+] }
+# The name-server handle `Gfx::new` takes.
+xous-names = { package = "xous-api-names", version = "0.9.71" }
+
+[patch.crates-io.getrandom]
+git = "https://github.com/betrusted-io/xous-core"
+rev = "9844906ddc1214438d0d942d2db2922846ae4722"
+
+[profile.release]
+codegen-units = 1
+debug = false
+# `3`, not `"s"`. Measured on both sides, twice: 2026-08-23 when this crate was
+# written, and again 2026-09-01 when the `"s"` experiment below was reverted.
+#
+# | | `"s"` | `3` |
+# |---|---|---|
+# | dry run, boot to a shell (2026-09-01, two runs each) | 5.5 / 5.6 s | **4.7 / 4.8 s** |
+# | `riscv32imac-unknown-xous-elf` release ELF (2026-09-01) | 1,129,544 B | **1,061,180 B** |
+#
+# `3` is both faster and *smaller*, so there is no swap-image or icache argument
+# on the other side of this -- the only reason `"s"` would have been the right
+# default for a payload this size. The hot path is `rv64::Cpu::step`, an
+# interpreter retiring 173.5 M instructions per boot, which is exactly the shape
+# that pays for inlining. The badge is a different machine and the ratio will not
+# carry over exactly, but its boot is minutes, so the same fraction is minutes
+# per hardware cycle.
+#
+# ## The `"s"` experiment, and why it is over
+#
+# Between 2026-08-23 and 2026-09-01 this said `"s"`, and that was a controlled
+# experiment rather than a preference (§20 of the task-8 report). The seventh
+# hardware run had exactly one uncontrolled variable between a mechanism that
+# returned real wire data on this badge (`probe/`) and one that returned its own
+# `.text` (this crate): the optimisation level. The mechanism that would have
+# made it matter is real -- `xous_ipc::Buffer::to_original` calls
+# `rkyv::access_unchecked`, whose root cast is UB on a misaligned offset, and
+# rkyv's own alignment assertion is `#[cfg(debug_assertions)]` and therefore
+# absent from release builds. UB whose symptom tracks codegen is exactly what
+# "correct length, payload from somewhere else" looks like.
+#
+# **The experiment ran and came back negative.** The 16 payload bytes were
+# byte-identical across the two binaries, at the same offset, with different
+# `.text` sizes and different code layouts -- so the fault did not track codegen
+# and was not this. The real defect was in the badge's USB driver (§23, §27),
+# and it is fixed. Restoring `3` gives the speed and the size back.
+opt-level = 3

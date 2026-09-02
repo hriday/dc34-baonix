@@ -1,0 +1,10 @@
+
+=== serving /dev/cu.usbmodemFL1TQZ1 at 15:58:52 ===
+/dev/cu.usbmodemFL1TQZ1: raw mode set
+=== detached at 15:59:23 ===
+
+=== serving /dev/cu.usbmodemFL1TQZ3 at 15:59:27 ===
+/dev/cu.usbmodemFL1TQZ3: raw mode set
+
+=== serving /dev/cu.usbmodemFL1TQZ3 at 14:10:44 ===
+/dev/cu.usbmodemFL1TQZ3: raw mode set

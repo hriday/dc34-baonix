@@ -1,0 +1,507 @@
+
+=== attached /dev/cu.usbmodemFL1TQZ1 at 19:19:59 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ1; ctrl-C to stop
+peer closed the port (EOF)
+
+rx 0 B, tx 0 B, 0 pages served
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 165, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 151, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 19:20:07 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ3 at 19:20:14 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ3; ctrl-C to stop
+=== probe start pid=12 ===
+mirror: HOOKED -- panics will print on this port as 'PANIC in PID n:'.
+legend: '## x' = entered stage x. A transcript ending on a '##' line means that stage killed the run.
+        '..hb' every ~500 ms = process alive. No hb and no progress = process gone.
+        'PANIC in PID n:' = a userspace panic -- but only if the 'mirror:' line above says HOOKED.
+## tx: 8 MiB of 4 KiB writes
+xfer: 2048 x 4096B in 1415 ms, 8388608 B accepted => 5789 KiB/s
+## rt: 64 x 4 KiB round trips
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+rt: 64/64 x 4096B, 262144 B rx, 7722 ms total, 120 ms/rt => 33 KiB/s
+## mem: baseline free-page read (forces a 48-page eviction)
+INFO:xous_swapper: Free pages after GC: 91 (services/xous-swapper/src/main.rs:793)
+free_pages=0 (0 KiB) of 2048 KiB SRAM, BASELINE -- BIASED: measured immediately after garbage_collect_pages(0) forced 48 pages out to swap; treat it as an upper bound on what was free before the call, not a steady-state figure. 0 may also mean an IPC error.
+## map: reserve 6144 KiB, touch it in 256 KiB steps -- measured against BASELINE free_pages=0 above, i.e. the machine as the boot set left it, with nothing allocated by this probe. RAM-limited only up to 2048 KiB of SRAM; past that this is a SWAP-limited figure, served out of 8160 KiB of usable swap shared with every other process.
+map: reserved 6144 KiB of VA (no physical pages yet)
+map: 256 KiB touched, 3 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 256 KiB is the boundary)
+map: 512 KiB touched, 285 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 512 KiB is the boundary)
+map: 768 KiB touched, 543 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 768 KiB is the boundary)
+map: 1024 KiB touched, 808 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1024 KiB is the boundary)
+..hb
+map: 1280 KiB touched, 1101 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1280 KiB is the boundary)
+map: 1536 KiB touched, 1466 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1536 KiB is the boundary)
+map: 1792 KiB touched, 1641 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1792 KiB is the boundary)
+..hb
+map: 2048 KiB touched, 1909 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2048 KiB is the boundary)
+map: 2304 KiB touched, 2292 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2304 KiB is the boundary)
+map: 2560 KiB touched, 2553 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2560 KiB is the boundary)
+map: 2816 KiB touched, 2821 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2816 KiB is the boundary)
+..hb
+map: 3072 KiB touched, 3090 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3072 KiB is the boundary)
+map: 3328 KiB touched, 3379 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3328 KiB is the boundary)
+map: 3584 KiB touched, 3654 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3584 KiB is the boundary)
+map: 3840 KiB touched, 3916 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3840 KiB is the boundary)
+..hb
+map: 4096 KiB touched, 4181 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4096 KiB is the boundary)
+map: 4352 KiB touched, 4473 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4352 KiB is the boundary)
+map: 4608 KiB touched, 4749 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4608 KiB is the boundary)
+..hb
+map: 4864 KiB touched, 5003 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4864 KiB is the boundary)
+map: 5120 KiB touched, 5258 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5120 KiB is the boundary)
+map: 5376 KiB touched, 5558 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5376 KiB is the boundary)
+..hb
+map: 5632 KiB touched, 5930 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5632 KiB is the boundary)
+map: 5888 KiB touched, 6095 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5888 KiB is the boundary)
+map: 6144 KiB touched, 6353 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 6144 KiB is the boundary)
+map: reached the 6144 KiB cap without failing. The cap is a CHOICE, not a boundary -- the derived ceiling is 8160 KiB of usable swap plus 2048 KiB of SRAM, shared with the whole system.
+## map: reclaim -- read each page back, then unmap it
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+map: reclaimed 6144 KiB of 6144 KiB in 5002 ms; readback checksum 253440 of 253440 -- the swap round trip preserved every marker byte
+## mem: post-reclaim free-page read (same call, same bias, so it is comparable)
+INFO:xous_swapper: Free pages after GC: 265 (services/xous-swapper/src/main.rs:793)
+free_pages=0 (0 KiB) POST-RECLAIM vs 0 (0 KiB) BASELINE -- a figure at or above the baseline means the mapping climb was fully given back and the heap climb below starts from the same machine the map climb did. Well below it means the reclaim did not take, and every heap number below is depressed by the difference.
+## heap: raise ceiling
+heap_max: 524288 -> 8388608 bytes (requested 8388608)
+## heap: climb to 6144 KiB in 128 KiB steps -- measured against POST-RECLAIM free_pages=0 (baseline was 0). RAM-limited only up to 2048 KiB of SRAM; past that this is a SWAP-limited figure, out of 8160 KiB of usable swap shared with every other process.
+heap: 128 KiB held, +128 KiB step, 8 ms elapsed (next step may abort; if this is the last heap line, 128 KiB is the boundary)
+heap: 256 KiB held, +128 KiB step, 13 ms elapsed (next step may abort; if this is the last heap line, 256 KiB is the boundary)
+heap: 384 KiB held, +128 KiB step, 14 ms elapsed (next step may abort; if this is the last heap line, 384 KiB is the boundary)
+heap: 512 KiB held, +128 KiB step, 16 ms elapsed (next step may abort; if this is the last heap line, 512 KiB is the boundary)
+heap: 640 KiB held, +128 KiB step, 17 ms elapsed (next step may abort; if this is the last heap line, 640 KiB is the boundary)
+heap: 768 KiB held, +128 KiB step, 19 ms elapsed (next step may abort; if this is the last heap line, 768 KiB is the boundary)
+heap: 896 KiB held, +128 KiB step, 21 ms elapsed (next step may abort; if this is the last heap line, 896 KiB is the boundary)
+heap: 1024 KiB held, +128 KiB step, 353 ms elapsed (next step may abort; if this is the last heap line, 1024 KiB is the boundary)
+heap: 1152 KiB held, +128 KiB step, 541 ms elapsed (next step may abort; if this is the last heap line, 1152 KiB is the boundary)
+heap: 1280 KiB held, +128 KiB step, 626 ms elapsed (next step may abort; if this is the last heap line, 1280 KiB is the boundary)
+heap: 1408 KiB held, +128 KiB step, 707 ms elapsed (next step may abort; if this is the last heap line, 1408 KiB is the boundary)
+heap: 1536 KiB held, +128 KiB step, 868 ms elapsed (next step may abort; if this is the last heap line, 1536 KiB is the boundary)
+heap: 1664 KiB held, +128 KiB step, 949 ms elapsed (next step may abort; if this is the last heap line, 1664 KiB is the boundary)
+heap: 1792 KiB held, +128 KiB step, 1031 ms elapsed (next step may abort; if this is the last heap line, 1792 KiB is the boundary)
+heap: 1920 KiB held, +128 KiB step, 1243 ms elapsed (next step may abort; if this is the last heap line, 1920 KiB is the boundary)
+..hb
+heap: 2048 KiB held, +128 KiB step, 1458 ms elapsed (next step may abort; if this is the last heap line, 2048 KiB is the boundary)
+heap: 2176 KiB held, +128 KiB step, 1639 ms elapsed (next step may abort; if this is the last heap line, 2176 KiB is the boundary)
+heap: 2304 KiB held, +128 KiB step, 1724 ms elapsed (next step may abort; if this is the last heap line, 2304 KiB is the boundary)
+heap: 2432 KiB held, +128 KiB step, 1805 ms elapsed (next step may abort; if this is the last heap line, 2432 KiB is the boundary)
+heap: 2560 KiB held, +128 KiB step, 1966 ms elapsed (next step may abort; if this is the last heap line, 2560 KiB is the boundary)
+heap: 2688 KiB held, +128 KiB step, 2047 ms elapsed (next step may abort; if this is the last heap line, 2688 KiB is the boundary)
+..hb
+heap: 2816 KiB held, +128 KiB step, 2256 ms elapsed (next step may abort; if this is the last heap line, 2816 KiB is the boundary)
+heap: 2944 KiB held, +128 KiB step, 2438 ms elapsed (next step may abort; if this is the last heap line, 2944 KiB is the boundary)
+heap: 3072 KiB held, +128 KiB step, 2556 ms elapsed (next step may abort; if this is the last heap line, 3072 KiB is the boundary)
+heap: 3200 KiB held, +128 KiB step, 2738 ms elapsed (next step may abort; if this is the last heap line, 3200 KiB is the boundary)
+heap: 3328 KiB held, +128 KiB step, 2819 ms elapsed (next step may abort; if this is the last heap line, 3328 KiB is the boundary)
+heap: 3456 KiB held, +128 KiB step, 2980 ms elapsed (next step may abort; if this is the last heap line, 3456 KiB is the boundary)
+heap: 3584 KiB held, +128 KiB step, 3061 ms elapsed (next step may abort; if this is the last heap line, 3584 KiB is the boundary)
+heap: 3712 KiB held, +128 KiB step, 3153 ms elapsed (next step may abort; if this is the last heap line, 3712 KiB is the boundary)
+heap: 3840 KiB held, +128 KiB step, 3351 ms elapsed (next step may abort; if this is the last heap line, 3840 KiB is the boundary)
+heap: 3968 KiB held, +128 KiB step, 3525 ms elapsed (next step may abort; if this is the last heap line, 3968 KiB is the boundary)
+..hb
+heap: 4096 KiB held, +128 KiB step, 3727 ms elapsed (next step may abort; if this is the last heap line, 4096 KiB is the boundary)
+heap: 4224 KiB held, +128 KiB step, 3832 ms elapsed (next step may abort; if this is the last heap line, 4224 KiB is the boundary)
+heap: 4352 KiB held, +128 KiB step, 3997 ms elapsed (next step may abort; if this is the last heap line, 4352 KiB is the boundary)
+heap: 4480 KiB held, +128 KiB step, 4078 ms elapsed (next step may abort; if this is the last heap line, 4480 KiB is the boundary)
+heap: 4608 KiB held, +128 KiB step, 4169 ms elapsed (next step may abort; if this is the last heap line, 4608 KiB is the boundary)
+heap: 4736 KiB held, +128 KiB step, 4364 ms elapsed (next step may abort; if this is the last heap line, 4736 KiB is the boundary)
+heap: 4864 KiB held, +128 KiB step, 4546 ms elapsed (next step may abort; if this is the last heap line, 4864 KiB is the boundary)
+..hb
+heap: 4992 KiB held, +128 KiB step, 4741 ms elapsed (next step may abort; if this is the last heap line, 4992 KiB is the boundary)
+heap: 5120 KiB held, +128 KiB step, 4849 ms elapsed (next step may abort; if this is the last heap line, 5120 KiB is the boundary)
+heap: 5248 KiB held, +128 KiB step, 5010 ms elapsed (next step may abort; if this is the last heap line, 5248 KiB is the boundary)
+heap: 5376 KiB held, +128 KiB step, 5092 ms elapsed (next step may abort; if this is the last heap line, 5376 KiB is the boundary)
+heap: 5504 KiB held, +128 KiB step, 5180 ms elapsed (next step may abort; if this is the last heap line, 5504 KiB is the boundary)
+heap: 5632 KiB held, +128 KiB step, 5378 ms elapsed (next step may abort; if this is the last heap line, 5632 KiB is the boundary)
+heap: 5760 KiB held, +128 KiB step, 5459 ms elapsed (next step may abort; if this is the last heap line, 5760 KiB is the boundary)
+heap: 5888 KiB held, +128 KiB step, 5664 ms elapsed (next step may abort; if this is the last heap line, 5888 KiB is the boundary)
+..hb
+heap: 6016 KiB held, +128 KiB step, 5835 ms elapsed (next step may abort; if this is the last heap line, 6016 KiB is the boundary)
+heap: 6144 KiB held, +128 KiB step, 5944 ms elapsed (next step may abort; if this is the last heap line, 6144 KiB is the boundary)
+heap: reached the 6144 KiB cap without failing. The cap is a CHOICE, not a boundary -- the derived ceiling is 8160 KiB of usable swap plus 2048 KiB of SRAM, shared with the whole system. Nothing is freed after this line: heap pages cannot be returned to the kernel, which is why this climb runs last.
+=== probe done ===
+peer closed the port (EOF)
+
+rx 11308347 B, tx 262144 B, 64 pages served
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 165, in <module>
+    sys.exit(__doc__)
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 151, in main
+    """
+termios.error: (6, 'Device not configured')
+=== detached at 20:05:13 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ3 at 20:06:20 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ3; ctrl-C to stop
+=== probe start pid=12 ===
+mirror: HOOKED -- panics will print on this port as 'PANIC in PID n:'.
+legend: '## x' = entered stage x. A transcript ending on a '##' line means that stage killed the run.
+        '..hb' every ~500 ms = process alive. No hb and no progress = process gone.
+        'PANIC in PID n:' = a userspace panic -- but only if the 'mirror:' line above says HOOKED.
+## tx: 8 MiB of 4 KiB writes
+xfer: 2048 x 4096B in 1416 ms, 8388608 B accepted => 5785 KiB/s
+## rt: 64 x 4 KiB round trips
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+rt: 64/64 x 4096B, 262144 B rx, 7800 ms total, 121 ms/rt => 32 KiB/s
+## mem: baseline free-page read (forces a 48-page eviction)
+INFO:xous_swapper: Free pages after GC: 91 (services/xous-swapper/src/main.rs:793)
+free_pages=0 (0 KiB) of 2048 KiB SRAM, BASELINE -- BIASED: measured immediately after garbage_collect_pages(0) forced 48 pages out to swap; treat it as an upper bound on what was free before the call, not a steady-state figure. 0 may also mean an IPC error.
+## map: reserve 6144 KiB, touch it in 256 KiB steps -- measured against BASELINE free_pages=0 above, i.e. the machine as the boot set left it, with nothing allocated by this probe. RAM-limited only up to 2048 KiB of SRAM; past that this is a SWAP-limited figure, served out of 8160 KiB of usable swap shared with every other process.
+map: reserved 6144 KiB of VA (no physical pages yet)
+map: 256 KiB touched, 2 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 256 KiB is the boundary)
+..hb
+map: 512 KiB touched, 295 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 512 KiB is the boundary)
+map: 768 KiB touched, 553 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 768 KiB is the boundary)
+map: 1024 KiB touched, 832 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1024 KiB is the boundary)
+..hb
+map: 1280 KiB touched, 1104 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1280 KiB is the boundary)
+map: 1536 KiB touched, 1462 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1536 KiB is the boundary)
+map: 1792 KiB touched, 1641 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1792 KiB is the boundary)
+..hb
+map: 2048 KiB touched, 1996 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2048 KiB is the boundary)
+map: 2304 KiB touched, 2295 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2304 KiB is the boundary)
+map: 2560 KiB touched, 2563 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2560 KiB is the boundary)
+map: 2816 KiB touched, 2818 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2816 KiB is the boundary)
+..hb
+map: 3072 KiB touched, 3093 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3072 KiB is the boundary)
+map: 3328 KiB touched, 3396 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3328 KiB is the boundary)
+map: 3584 KiB touched, 3654 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3584 KiB is the boundary)
+map: 3840 KiB touched, 3906 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3840 KiB is the boundary)
+..hb
+map: 4096 KiB touched, 4184 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4096 KiB is the boundary)
+map: 4352 KiB touched, 4483 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4352 KiB is the boundary)
+map: 4608 KiB touched, 4741 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4608 KiB is the boundary)
+map: 4864 KiB touched, 4993 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4864 KiB is the boundary)
+..hb
+map: 5120 KiB touched, 5278 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5120 KiB is the boundary)
+map: 5376 KiB touched, 5657 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5376 KiB is the boundary)
+map: 5632 KiB touched, 5908 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5632 KiB is the boundary)
+map: 5888 KiB touched, 6080 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5888 KiB is the boundary)
+..hb
+map: 6144 KiB touched, 6473 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 6144 KiB is the boundary)
+map: reached the 6144 KiB cap without failing. The cap is a CHOICE, not a boundary -- the derived ceiling is 8160 KiB of usable swap plus 2048 KiB of SRAM, shared with the whole system.
+## map: reclaim -- read each page back, then unmap it
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+peer closed the port (EOF)
+host: 64 requests served, own turnaround min 0.10 / median 0.13 / max 0.41 ms -- this is inside the badge's rt figure and cannot be separated there
+
+rx 11313785 B, tx 262144 B, 64 pages served, 0 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 271, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 250, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 20:06:45 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ1 at 20:07:02 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ1; ctrl-C to stop
+peer closed the port (EOF)
+
+rx 0 B, tx 0 B, 0 pages served, 0 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 271, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 250, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 20:08:04 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ3 at 20:08:10 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ3; ctrl-C to stop
+=== probe start pid=12 ===
+mirror: HOOKED -- panics will print on this port as 'PANIC in PID n:'.
+legend: '## x' = entered stage x. A transcript ending on a '##' line means that stage killed the run.
+        '..hb' every ~500 ms = process alive. No hb and no progress = process gone.
+        'PANIC in PID n:' = a userspace panic -- but only if the 'mirror:' line above says HOOKED.
+        The three throughput legs run with the heartbeat OFF on purpose -- they are timing this channel -- so expect silence for the length of each one, up to 20 s for rx-stream.
+## tx: 8 MiB of 4 KiB writes
+xfer: 2048 x 4096B in 1419 ms, 8388608 B accepted => 5773 KiB/s
+## rx-stream: 1024 KiB streamed back to back (silent for up to 20 s)
+peer closed the port (EOF)
+host: 1 stream(s) served
+
+rx 11315995 B, tx 1048576 B, 0 pages served, 1 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 271, in <module>
+    print("could not restore tty settings: %s" % e, file=sys.stderr)
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 250, in main
+    "separated there" % (
+termios.error: (6, 'Device not configured')
+=== detached at 20:39:30 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ1 at 20:39:33 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ1; ctrl-C to stop
+peer closed the port (EOF)
+
+rx 0 B, tx 0 B, 0 pages served, 0 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 290, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 269, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 20:40:06 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ3 at 20:40:11 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ3; ctrl-C to stop
+=== probe start pid=12 ===
+mirror: HOOKED -- panics will print on this port as 'PANIC in PID n:'.
+legend: '## x' = entered stage x. A transcript ending on a '##' line means that stage killed the run.
+        '..hb' every ~500 ms = process alive. No hb and no progress = process gone.
+        'PANIC in PID n:' = a userspace panic -- but only if the 'mirror:' line above says HOOKED.
+        The three throughput legs run with the heartbeat OFF on purpose -- they are timing this channel -- so expect silence for the length of each one, up to 20 s per burst of the rx sweep.
+## heap: raise ceiling (moved ahead of the throughput legs in fix round 5)
+heap_max: 524288 -> 8388608 bytes (requested 8388608)
+## tx: 8 MiB of 4 KiB writes
+xfer: 2048 x 4096B in 1413 ms, 8388608 B accepted => 5797 KiB/s
+## rx-sweep: bursts of [1, 2, 4, 8, 16, 32, 64, 128] pages of 4096 B, each drained before the next (silent for up to 20 s per burst)
+rx-sweep: what this is looking for is the LARGEST burst with 0 lend errors, not the KiB/s. Derived ceiling if the USB server drained nothing while a burst arrived: 128 queue slots x 512 B per CDC packet = 64 KiB. It does drain concurrently, so the real figure should be higher; how much higher is what no reading of the source could settle.
+rx-burst 4 KiB: 4096/4096 B, 2 deliveries (2048 B mean, the service hands over at most 3840 B at a time), 81 ms steady window => 44 KiB/s; wall 81 ms request-to-last-byte => 49 KiB/s including the turnaround; 0 lend errors; 0 bad edge bytes; parked before the request: true
+rx-burst 8 KiB: 8192/8192 B, 4 deliveries (2048 B mean, the service hands over at most 3840 B at a time), 296 ms steady window => 25 KiB/s; wall 297 ms request-to-last-byte => 26 KiB/s including the turnaround; 0 lend errors; 0 bad edge bytes; parked before the request: true
+rx-burst 16 KiB: 16384/16384 B, 6 deliveries (2730 B mean, the service hands over at most 3840 B at a time), 495 ms steady window => 31 KiB/s; wall 497 ms request-to-last-byte => 32 KiB/s including the turnaround; 0 lend errors; 0 bad edge bytes; parked before the request: true
+rx-burst 32 KiB: 32768/32768 B, 10 deliveries (3276 B mean, the service hands over at most 3840 B at a time), 894 ms steady window => 35 KiB/s; wall 897 ms request-to-last-byte => 35 KiB/s including the turnaround; 0 lend errors; 0 bad edge bytes; parked before the request: true
+rx-burst 64 KiB: 44288/65536 B, 13 deliveries (3406 B mean, the service hands over at most 3840 B at a time), 1190 ms steady window => 36 KiB/s; wall 1197 ms request-to-last-byte => 36 KiB/s including the turnaround; 0 lend errors; 0 bad edge bytes; parked before the request: true
+rx-sweep: LARGEST BURST ABSORBED = 32 KiB at 35 KiB/s sustained. Next step up 64 KiB truncated at 44288 B with no lend error -- the host stopped or the deadline ran out, which is a host or link finding, not a queue one. Treat 32 KiB as the emulator's receive window: a transfer design that pushes more than that without waiting for the badge to drain will hit the same fault, and the fault takes the receiving process, not the USB server.
+## rt: 64 x 4 KiB round trips, one request at a time
+rt: 64/64 x 4096B, min 2 / mean 2.0 / max 3 ms per round trip => 1984 KiB/s at the mean
+rt-floor: clock 1 ms; one blocking IPC 19 us measured over 1000 calls, and a round trip contains at least four; watchdog residual 5 ms with 0/64 rounds at or above it, 0 rounds sent without a confirmed park, 0 deliveries with a bad edge byte, 0 listener lend errors. The host's own service time is inside every figure above and cannot be separated on this end -- echo-host.py prints its own turnaround.
+## mem: baseline free-page read (forces a 48-page eviction)
+INFO:xous_swapper: Free pages after GC: 77 (services/xous-swapper/src/main.rs:793)
+free_pages=77 (308 KiB) of 2048 KiB SRAM, BASELINE -- BIASED: measured immediately after a GarbageCollect(0) forced 48 pages out to swap; treat it as an upper bound on what was free before the call, not a steady-state figure. A 0 here now means zero free pages and nothing else -- an IPC failure prints as IPC-ERROR.
+## map: reserve 6144 KiB, touch it in 256 KiB steps -- measured against BASELINE free_pages=77 (308 KiB) above, i.e. the machine as the boot set left it, with nothing allocated by this probe. RAM-limited only up to 2048 KiB of SRAM; past that this is a SWAP-limited figure, served out of 8160 KiB of usable swap shared with every other process.
+map: reserved 6144 KiB of VA (no physical pages yet)
+map: 256 KiB touched, 3 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 256 KiB is the boundary)
+map: 512 KiB touched, 364 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 512 KiB is the boundary)
+..hb
+map: 768 KiB touched, 637 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 768 KiB is the boundary)
+map: 1024 KiB touched, 929 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1024 KiB is the boundary)
+map: 1280 KiB touched, 1201 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1280 KiB is the boundary)
+..hb
+map: 1536 KiB touched, 1484 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1536 KiB is the boundary)
+map: 1792 KiB touched, 1735 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 1792 KiB is the boundary)
+map: 2048 KiB touched, 2111 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2048 KiB is the boundary)
+map: 2304 KiB touched, 2393 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2304 KiB is the boundary)
+..hb
+map: 2560 KiB touched, 2662 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2560 KiB is the boundary)
+map: 2816 KiB touched, 2927 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 2816 KiB is the boundary)
+map: 3072 KiB touched, 3220 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3072 KiB is the boundary)
+..hb
+map: 3328 KiB touched, 3515 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3328 KiB is the boundary)
+map: 3584 KiB touched, 3770 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3584 KiB is the boundary)
+map: 3840 KiB touched, 4042 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 3840 KiB is the boundary)
+..hb
+map: 4096 KiB touched, 4318 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4096 KiB is the boundary)
+map: 4352 KiB touched, 4694 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4352 KiB is the boundary)
+map: 4608 KiB touched, 4869 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4608 KiB is the boundary)
+..hb
+map: 4864 KiB touched, 5127 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 4864 KiB is the boundary)
+map: 5120 KiB touched, 5513 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5120 KiB is the boundary)
+map: 5376 KiB touched, 5785 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5376 KiB is the boundary)
+map: 5632 KiB touched, 6050 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5632 KiB is the boundary)
+..hb
+map: 5888 KiB touched, 6326 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 5888 KiB is the boundary)
+map: 6144 KiB touched, 6632 ms elapsed (next step may panic the kernel or the swapper; if this is the last map line, 6144 KiB is the boundary)
+map: reached the 6144 KiB cap without failing. The cap is a CHOICE, not a boundary -- the derived ceiling is 8160 KiB of usable swap plus 2048 KiB of SRAM, shared with the whole system.
+## map: reclaim -- read each page back, then unmap it
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+..hb
+map: reclaimed 6144 KiB of 6144 KiB in 4880 ms; readback checksum 253440 of 253440 -- the swap round trip preserved every marker byte
+## mem: post-reclaim free-page read (same call, same bias, so it is comparable)
+INFO:xous_swapper: Free pages after GC: 264 (services/xous-swapper/src/main.rs:793)
+free_pages=264 (1056 KiB) POST-RECLAIM vs 77 (308 KiB) BASELINE -- a figure at or above the baseline means the mapping climb was fully given back and the heap climb below starts from the same machine the map climb did. Well below it means the reclaim did not take, and every heap number below is depressed by the difference.
+## heap: climb to 6144 KiB in 128 KiB steps -- measured against POST-RECLAIM free_pages=264 (1056 KiB) (baseline was 77 (308 KiB)). RAM-limited only up to 2048 KiB of SRAM; past that this is a SWAP-limited figure, out of 8160 KiB of usable swap shared with every other process.
+heap: 128 KiB held, +128 KiB step, 8 ms elapsed (next step may abort; if this is the last heap line, 128 KiB is the boundary)
+heap: 256 KiB held, +128 KiB step, 9 ms elapsed (next step may abort; if this is the last heap line, 256 KiB is the boundary)
+heap: 384 KiB held, +128 KiB step, 11 ms elapsed (next step may abort; if this is the last heap line, 384 KiB is the boundary)
+heap: 512 KiB held, +128 KiB step, 12 ms elapsed (next step may abort; if this is the last heap line, 512 KiB is the boundary)
+heap: 640 KiB held, +128 KiB step, 14 ms elapsed (next step may abort; if this is the last heap line, 640 KiB is the boundary)
+heap: 768 KiB held, +128 KiB step, 15 ms elapsed (next step may abort; if this is the last heap line, 768 KiB is the boundary)
+heap: 896 KiB held, +128 KiB step, 141 ms elapsed (next step may abort; if this is the last heap line, 896 KiB is the boundary)
+..hb
+heap: 1024 KiB held, +128 KiB step, 374 ms elapsed (next step may abort; if this is the last heap line, 1024 KiB is the boundary)
+heap: 1152 KiB held, +128 KiB step, 555 ms elapsed (next step may abort; if this is the last heap line, 1152 KiB is the boundary)
+heap: 1280 KiB held, +128 KiB step, 643 ms elapsed (next step may abort; if this is the last heap line, 1280 KiB is the boundary)
+heap: 1408 KiB held, +128 KiB step, 804 ms elapsed (next step may abort; if this is the last heap line, 1408 KiB is the boundary)
+heap: 1536 KiB held, +128 KiB step, 886 ms elapsed (next step may abort; if this is the last heap line, 1536 KiB is the boundary)
+heap: 1664 KiB held, +128 KiB step, 967 ms elapsed (next step may abort; if this is the last heap line, 1664 KiB is the boundary)
+heap: 1792 KiB held, +128 KiB step, 1166 ms elapsed (next step may abort; if this is the last heap line, 1792 KiB is the boundary)
+..hb
+heap: 1920 KiB held, +128 KiB step, 1388 ms elapsed (next step may abort; if this is the last heap line, 1920 KiB is the boundary)
+heap: 2048 KiB held, +128 KiB step, 1566 ms elapsed (next step may abort; if this is the last heap line, 2048 KiB is the boundary)
+heap: 2176 KiB held, +128 KiB step, 1668 ms elapsed (next step may abort; if this is the last heap line, 2176 KiB is the boundary)
+heap: 2304 KiB held, +128 KiB step, 1829 ms elapsed (next step may abort; if this is the last heap line, 2304 KiB is the boundary)
+heap: 2432 KiB held, +128 KiB step, 1910 ms elapsed (next step may abort; if this is the last heap line, 2432 KiB is the boundary)
+heap: 2560 KiB held, +128 KiB step, 1991 ms elapsed (next step may abort; if this is the last heap line, 2560 KiB is the boundary)
+heap: 2688 KiB held, +128 KiB step, 2197 ms elapsed (next step may abort; if this is the last heap line, 2688 KiB is the boundary)
+heap: 2816 KiB held, +128 KiB step, 2388 ms elapsed (next step may abort; if this is the last heap line, 2816 KiB is the boundary)
+..hb
+heap: 2944 KiB held, +128 KiB step, 2587 ms elapsed (next step may abort; if this is the last heap line, 2944 KiB is the boundary)
+heap: 3072 KiB held, +128 KiB step, 2692 ms elapsed (next step may abort; if this is the last heap line, 3072 KiB is the boundary)
+heap: 3200 KiB held, +128 KiB step, 2853 ms elapsed (next step may abort; if this is the last heap line, 3200 KiB is the boundary)
+heap: 3328 KiB held, +128 KiB step, 2934 ms elapsed (next step may abort; if this is the last heap line, 3328 KiB is the boundary)
+heap: 3456 KiB held, +128 KiB step, 3016 ms elapsed (next step may abort; if this is the last heap line, 3456 KiB is the boundary)
+heap: 3584 KiB held, +128 KiB step, 3221 ms elapsed (next step may abort; if this is the last heap line, 3584 KiB is the boundary)
+..hb
+heap: 3712 KiB held, +128 KiB step, 3423 ms elapsed (next step may abort; if this is the last heap line, 3712 KiB is the boundary)
+heap: 3840 KiB held, +128 KiB step, 3611 ms elapsed (next step may abort; if this is the last heap line, 3840 KiB is the boundary)
+heap: 3968 KiB held, +128 KiB step, 3716 ms elapsed (next step may abort; if this is the last heap line, 3968 KiB is the boundary)
+heap: 4096 KiB held, +128 KiB step, 3877 ms elapsed (next step may abort; if this is the last heap line, 4096 KiB is the boundary)
+heap: 4224 KiB held, +128 KiB step, 3959 ms elapsed (next step may abort; if this is the last heap line, 4224 KiB is the boundary)
+heap: 4352 KiB held, +128 KiB step, 4040 ms elapsed (next step may abort; if this is the last heap line, 4352 KiB is the boundary)
+heap: 4480 KiB held, +128 KiB step, 4245 ms elapsed (next step may abort; if this is the last heap line, 4480 KiB is the boundary)
+heap: 4608 KiB held, +128 KiB step, 4420 ms elapsed (next step may abort; if this is the last heap line, 4608 KiB is the boundary)
+..hb
+heap: 4736 KiB held, +128 KiB step, 4632 ms elapsed (next step may abort; if this is the last heap line, 4736 KiB is the boundary)
+heap: 4864 KiB held, +128 KiB step, 4737 ms elapsed (next step may abort; if this is the last heap line, 4864 KiB is the boundary)
+heap: 4992 KiB held, +128 KiB step, 4902 ms elapsed (next step may abort; if this is the last heap line, 4992 KiB is the boundary)
+heap: 5120 KiB held, +128 KiB step, 4983 ms elapsed (next step may abort; if this is the last heap line, 5120 KiB is the boundary)
+heap: 5248 KiB held, +128 KiB step, 5064 ms elapsed (next step may abort; if this is the last heap line, 5248 KiB is the boundary)
+..hb
+heap: 5376 KiB held, +128 KiB step, 5263 ms elapsed (next step may abort; if this is the last heap line, 5376 KiB is the boundary)
+heap: 5504 KiB held, +128 KiB step, 5462 ms elapsed (next step may abort; if this is the last heap line, 5504 KiB is the boundary)
+heap: 5632 KiB held, +128 KiB step, 5647 ms elapsed (next step may abort; if this is the last heap line, 5632 KiB is the boundary)
+heap: 5760 KiB held, +128 KiB step, 5759 ms elapsed (next step may abort; if this is the last heap line, 5760 KiB is the boundary)
+heap: 5888 KiB held, +128 KiB step, 5923 ms elapsed (next step may abort; if this is the last heap line, 5888 KiB is the boundary)
+heap: 6016 KiB held, +128 KiB step, 6004 ms elapsed (next step may abort; if this is the last heap line, 6016 KiB is the boundary)
+heap: 6144 KiB held, +128 KiB step, 6086 ms elapsed (next step may abort; if this is the last heap line, 6144 KiB is the boundary)
+heap: reached the 6144 KiB cap without failing. The cap is a CHOICE, not a boundary -- the derived ceiling is 8160 KiB of usable swap plus 2048 KiB of SRAM, shared with the whole system. Nothing is freed after this line: heap pages cannot be returned to the kernel, which is why this climb runs last.
+=== probe done ===
+peer closed the port (EOF)
+host: 64 requests served, own turnaround min 0.09 / median 0.11 / max 0.40 ms -- this is inside the badge's rt figure and cannot be separated there
+host: 5 stream(s) served, KiB each: 4, 8, 16, 32, 64
+
+rx 11279663 B, tx 389120 B, 64 pages served, 5 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 290, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 269, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 21:30:15 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ1 at 16:36:24 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ1; ctrl-C to stop
+peer closed the port (EOF)
+
+rx 0 B, tx 0 B, 0 pages served, 0 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 290, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 269, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 16:36:48 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ1 at 13:51:31 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ1; ctrl-C to stop
+peer closed the port (EOF)
+
+rx 0 B, tx 0 B, 0 pages served, 0 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 290, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 269, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 13:52:10 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ3 at 13:52:16 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ3; ctrl-C to stop
+INFO:bao1x_hal_service::servers::keyboard: keyboard listener _Modal Dialog Server_ -> 18 (services/bao1x-hal-service/src/servers/keyboard.rs:380)
+[corrupt] b'\xc1\xb0\x01\x04\x00\x00\x02\x00\x00\xb2B\x0e\xa3\xc1\xb0\x01\x04\x00\x00\x02\x00\x00\xb2B\x0e\xa3\xc1\xb0\x01\x04\x00\x00\x02\x00\x00\xb2B\x0e\xa3\xc1\xb0\x01\x04\x00\x00\x02\x00\x00\xb2B\x0e\xa3ERR :rv64_badge::badge: rv64: cannot start the guest: read 0x80200038 failed: no answer after 4 attempt(s) over 2000 ms (250 ms each, budget 3 re-sends) (src/main.rs:166)'
+peer closed the port (EOF)
+
+rx 1134 B, tx 0 B, 0 pages served, 0 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 290, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 269, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 13:53:40 ===
+
+=== attached /dev/cu.usbmodemWBB5BP09459731 at 13:53:45 ===
+echoing 4096-byte pages on /dev/cu.usbmodemWBB5BP09459731; ctrl-C to stop
+peer closed the port (EOF)
+
+rx 0 B, tx 0 B, 0 pages served, 0 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 290, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 269, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 14:07:21 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ1 at 14:07:32 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ1; ctrl-C to stop
+peer closed the port (EOF)
+
+rx 0 B, tx 0 B, 0 pages served, 0 streams
+Traceback (most recent call last):
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 290, in <module>
+    main()
+  File "/Users/hriday/code/.claude/worktrees/rv64-emulator/baochip/badge/echo-host.py", line 269, in main
+    termios.tcsetattr(fd, termios.TCSANOW, saved)
+termios.error: (6, 'Device not configured')
+=== detached at 14:09:07 ===
+
+=== attached /dev/cu.usbmodemFL1TQZ3 at 14:09:13 ===
+echoing 4096-byte pages on /dev/cu.usbmodemFL1TQZ3; ctrl-C to stop
+INFO:bao1x_hal_service::servers::keyboard: keyboard listener _Modal Dialog Server_ -> 18 (services/bao1x-hal-service/src/servers/keyboard.rs:380)
+[corrupt] b'\xc1\xb0\x01\x04\x00\x00\x02\x00\x00\xb2B\x0e\xa3\xc1\xb0\x01\x04\x00\x00\x02\x00\x00\xb2B\x0e\xa3\xc1\xb0\x01\x04\x00\x00\x02\x00\x00\xb2B\x0e\xa3\xc1\xb0\x01\x04\x00\x00\x02\x00\x00\xb2B\x0e\xa3ERR :rv64_badge::badge: rv64: cannot start the guest: read 0x80200038 failed: no answer after 4 attempt(s) over 2000 ms (250 ms each, budget 3 re-sends) (src/main.rs:164)'
+=== detached at 14:10:05 ===

@@ -1,0 +1,37 @@
+Drop the ep_in_busy/ep_in_refusals reset from usb-bao1x's USB reset path.
+
+usb-bao1x-serialrx-repair.patch carries this stanza, but it belongs to
+bao1x-hal-usb-in-completion.patch: it resets the two CorigineWrapper fields
+that patch adds. With the in-completion patch omitted -- which is the current
+recommendation, see badge/README.md and task-8-report §34 -- those fields do
+not exist and services/usb-bao1x does not compile without this removal.
+
+Apply after usb-bao1x-serialrx-repair.patch, only in a build that omits
+bao1x-hal-usb-in-completion.patch.
+
+--- a/services/usb-bao1x/src/hw.rs
++++ b/services/usb-bao1x/src/hw.rs
+@@ -343,23 +343,12 @@
+             .map(|_| std::sync::Arc::new(core::sync::atomic::AtomicBool::new(false)))
+             .collect::<Vec<_>>()
+             .into_boxed_slice();
+         for ready in self.wrapper.ep_out_ready.iter() {
+             ready.store(false, Ordering::SeqCst);
+         }
+-        // --- local repair (not upstream) ---
+-        // A reset abandons every queued transfer, so nothing is in flight and no
+-        // completion event is coming for what was. See `CorigineWrapper::ep_in_busy`.
+-        for busy in self.wrapper.ep_in_busy.iter() {
+-            busy.store(false, Ordering::SeqCst);
+-        }
+-        for refusals in self.wrapper.ep_in_refusals.iter() {
+-            refusals.store(0, Ordering::SeqCst);
+-        }
+-        // --- end local repair ---
+-
+         // re-enable IRQs
+         self.irq_csr.wo(utra::irqarray1::EV_PENDING, 0xFFFF_FFFF);
+         self.irq_csr.wo(utra::irqarray1::EV_ENABLE, CORIGINE_IRQ_MASK | SW_IRQ_MASK);
+     }
+ 
+     /// Writes data to the USB CDC serial transmit buffer while preventing
